@@ -33,6 +33,7 @@ PluginComponent {
     property string searchQuery: ""
     property string filteredStatus: ""
     property bool favoriteOnly: false
+    property bool blacklistOnly: false
 
     property int sortMode: pluginData.sortMode ?? 0
     property var favorites: pluginData.favorites ?? []
@@ -158,7 +159,13 @@ PluginComponent {
         var blackSet = new Set(blacklist)
         for (var i = 0; i < gamesModel.count; i++) {
             var game = gamesModel.get(i)
-            if (blackSet.has(game.slug)) continue;
+            var isBlacklisted = blackSet.has(game.slug)
+
+            if (blacklistOnly) {
+                if (!isBlacklisted) continue;
+            } else {
+                if (isBlacklisted) continue;
+            }
 
             var matchesSearch = query === "" || (game.name && game.name.toLowerCase().includes(query))
             var matchesFavorite = !favoriteOnly || root.isFavorite(game.slug)
@@ -169,22 +176,12 @@ PluginComponent {
                     "name": game.name,
                     "slug": game.slug,
                     "coverPath": game.coverPath,
-                    "isVirtual": false
+                    "isVirtual": false,
+                    "isBlacklisted": isBlacklisted
                 })
             }
         }
         
-        // Add virtual card at the end
-        if (query === "") {
-            filteredGamesModel.append({
-                "id": -2,
-                "name": "Add Games",
-                "slug": "lutris-main",
-                "isVirtual": true,
-                "coverPath": ""
-            })
-        }
-
         filteredStatus = query === "" ? "" : filteredGamesModel.count + " of " + gamesModel.count + " games"
     }
 
@@ -352,7 +349,7 @@ PluginComponent {
 
                         DankTextField {
                             id: searchField
-                            width: parent.width - 36 - 36 - 36 - 36 - Theme.spacingS * 4
+                            width: parent.width - 36 - 36 - 36 - 36 - 36 - Theme.spacingS * 5
                             height: parent.height
                             leftIconName: "search"
                             placeholderText: "Search games..."
@@ -380,6 +377,21 @@ PluginComponent {
                             textColor: root.favoriteOnly ? Theme.onPrimary : Theme.surfaceText
                             onClicked: {
                                 root.favoriteOnly = !root.favoriteOnly
+                                if (root.favoriteOnly) root.blacklistOnly = false
+                                root.updateFilteredModel()
+                            }
+                        }
+
+                        DankButton {
+                            id: blacklistOnlyButton
+                            width: 36
+                            height: parent.height
+                            iconName: "visibility_off"
+                            backgroundColor: root.blacklistOnly ? Theme.error : Theme.surfaceContainerHigh
+                            textColor: root.blacklistOnly ? Theme.onPrimary : Theme.surfaceText
+                            onClicked: {
+                                root.blacklistOnly = !root.blacklistOnly
+                                if (root.blacklistOnly) root.favoriteOnly = false
                                 root.updateFilteredModel()
                             }
                         }
@@ -537,18 +549,33 @@ PluginComponent {
                                                     DankButton {
                                                         width: parent.width
                                                         height: 32
-                                                        text: "Hide Game"
-                                                        iconName: "block"
+                                                        text: model.isBlacklisted ? "Unhide Game" : "Hide Game"
+                                                        iconName: model.isBlacklisted ? "visibility" : "block"
                                                         backgroundColor: Theme.surfaceContainerHigh
-                                                        textColor: Theme.error
+                                                        textColor: model.isBlacklisted ? Theme.primary : Theme.error
+                                                        enabled: model.isBlacklisted || !root.isFavorite(model.slug)
                                                         onClicked: {
                                                             var newBlacklist = root.blacklist.slice()
-                                                            newBlacklist.push(model.slug)
+                                                            if (model.isBlacklisted) {
+                                                                var idx = newBlacklist.indexOf(model.slug)
+                                                                if (idx >= 0) newBlacklist.splice(idx, 1)
+                                                            } else {
+                                                                newBlacklist.push(model.slug)
+                                                            }
                                                             root.blacklist = newBlacklist
                                                             root.saveStats()
                                                             root.updateFilteredModel()
                                                             statsTooltip.visible = false
                                                         }
+                                                    }
+                                                    
+                                                    StyledText {
+                                                        visible: !model.isBlacklisted && root.isFavorite(model.slug)
+                                                        text: "Cannot hide favorites"
+                                                        font.pixelSize: 10
+                                                        color: Theme.error
+                                                        horizontalAlignment: Text.AlignHCenter
+                                                        width: parent.width
                                                     }
                                                 }
 
