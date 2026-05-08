@@ -352,7 +352,7 @@ PluginComponent {
 
                         DankTextField {
                             id: searchField
-                            width: parent.width - 36 - 36 - 36 - Theme.spacingS * 3
+                            width: parent.width - 36 - 36 - 36 - 36 - Theme.spacingS * 4
                             height: parent.height
                             leftIconName: "search"
                             placeholderText: "Search games..."
@@ -382,6 +382,16 @@ PluginComponent {
                                 root.favoriteOnly = !root.favoriteOnly
                                 root.updateFilteredModel()
                             }
+                        }
+
+                        DankButton {
+                            id: settingsButton
+                            width: 36
+                            height: parent.height
+                            iconName: "settings"
+                            backgroundColor: Theme.surfaceContainerHigh
+                            textColor: Theme.surfaceText
+                            onClicked: pluginService.showPluginSettings(root.pluginId)
                         }
 
                         DankButton {
@@ -528,9 +538,9 @@ PluginComponent {
                                                         width: parent.width
                                                         height: 32
                                                         text: "Hide Game"
-                                                        iconName: "visibility_off"
-                                                        backgroundColor: Theme.errorContainer
-                                                        textColor: Theme.onErrorContainer
+                                                        iconName: "block"
+                                                        backgroundColor: Theme.surfaceContainerHigh
+                                                        textColor: Theme.error
                                                         onClicked: {
                                                             var newBlacklist = root.blacklist.slice()
                                                             newBlacklist.push(model.slug)
