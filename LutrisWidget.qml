@@ -41,9 +41,7 @@ PluginComponent {
     property var blacklist: pluginData.blacklist ?? []
 
     onPluginDataChanged: {
-        console.log("DMS-Lutris: Plugin data changed")
         if (pluginData.blacklist !== undefined) {
-            console.log("DMS-Lutris: Blacklist updated from data: " + JSON.stringify(pluginData.blacklist))
             blacklist = pluginData.blacklist
             updateFilteredModel()
         }
@@ -552,12 +550,19 @@ PluginComponent {
                                                 if (mouse.button === Qt.LeftButton) {
                                                     root.launchGame(model.id, model.slug)
                                                 } else if (mouse.button === Qt.RightButton) {
-                                                    statsTooltip.show()
+                                                    statsTooltip.targetSlug = model.slug
+                                                    statsTooltip.targetName = model.name || model.slug
+                                                    statsTooltip.targetIsBlacklisted = model.isBlacklisted
+                                                    statsTooltip.visible = true
                                                 }
                                             }
 
                                             ToolTip {
                                                 id: statsTooltip
+                                                property string targetSlug: ""
+                                                property string targetName: ""
+                                                property bool targetIsBlacklisted: false
+                                                
                                                 delay: 0
                                                 timeout: 5000
                                                 visible: false
@@ -565,16 +570,16 @@ PluginComponent {
                                                 contentItem: Column {
                                                     spacing: 8
                                                     StyledText {
-                                                        text: model.name || model.slug
+                                                        text: statsTooltip.targetName
                                                         font.bold: true
                                                         color: Theme.primary
                                                     }
                                                     StyledText {
-                                                        text: "Play count: " + (root.playCounts[model.slug]?.count || 0)
+                                                        text: "Play count: " + (root.playCounts[statsTooltip.targetSlug]?.count || 0)
                                                         font.pixelSize: Theme.fontSizeSmall
                                                     }
                                                     StyledText {
-                                                        text: "Last played: " + (root.playCounts[model.slug]?.lastPlayed ? new Date(root.playCounts[model.slug].lastPlayed).toLocaleString() : "Never")
+                                                        text: "Last played: " + (root.playCounts[statsTooltip.targetSlug]?.lastPlayed ? new Date(root.playCounts[statsTooltip.targetSlug].lastPlayed).toLocaleString() : "Never")
                                                         font.pixelSize: Theme.fontSizeSmall
                                                     }
                                                     
@@ -583,19 +588,19 @@ PluginComponent {
                                                     DankButton {
                                                         width: parent.width
                                                         height: 32
-                                                        text: model.isBlacklisted ? "Unhide Game" : "Hide Game"
-                                                        iconName: model.isBlacklisted ? "visibility" : "block"
+                                                        text: statsTooltip.targetIsBlacklisted ? "Unhide Game" : "Hide Game"
+                                                        iconName: statsTooltip.targetIsBlacklisted ? "visibility" : "block"
                                                         backgroundColor: Theme.surfaceContainerHigh
-                                                        textColor: model.isBlacklisted ? Theme.primary : Theme.error
-                                                        enabled: model.isBlacklisted || !root.isFavorite(model.slug)
+                                                        textColor: statsTooltip.targetIsBlacklisted ? Theme.primary : Theme.error
+                                                        enabled: statsTooltip.targetIsBlacklisted || !root.isFavorite(statsTooltip.targetSlug)
                                                         onClicked: {
                                                             statsTooltip.visible = false
-                                                            root.toggleBlacklist(model.slug)
+                                                            root.toggleBlacklist(statsTooltip.targetSlug)
                                                         }
                                                     }
                                                     
                                                     StyledText {
-                                                        visible: !model.isBlacklisted && root.isFavorite(model.slug)
+                                                        visible: !statsTooltip.targetIsBlacklisted && root.isFavorite(statsTooltip.targetSlug)
                                                         text: "Cannot hide favorites"
                                                         font.pixelSize: 10
                                                         color: Theme.error
@@ -608,10 +613,6 @@ PluginComponent {
                                                     color: Theme.surfaceContainerHighest
                                                     radius: 8
                                                     border.color: Theme.surfaceVariant
-                                                }
-
-                                                function show() {
-                                                    visible = true
                                                 }
                                             }
                                         }
