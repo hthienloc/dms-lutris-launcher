@@ -1,0 +1,14 @@
+{
+    "id": "lutris",
+    "name": "Lutris",
+    "description": "Launch your Lutris games directly from the shell",
+    "version": "1.0.0",
+    "license": "GPL-3.0",
+    "author": "Loc Huynh",
+    "icon": "sports_esports",
+    "type": "widget",
+    "capabilities": ["dankbar-widget"],
+    "component": "./LutrisWidget.qml",
+    "permissions": [],
+    "screenshot": ""
+}
