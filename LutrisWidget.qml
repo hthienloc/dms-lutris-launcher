@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Effects
 import Quickshell
 import Quickshell.Io
 import qs.Common
@@ -165,6 +164,9 @@ PluginComponent {
                                         height: 180
                                         color: Theme.surfaceContainer
                                         radius: Theme.roundness === "ROUND_FULL" ? 12 : (Theme.roundness === "ROUND_TWELVE" ? 12 : (Theme.roundness === "ROUND_EIGHT" ? 8 : 4))
+                                        
+                                        // Simple and stable rounding
+                                        layer.enabled: true
                                         clip: true
 
                                         Image {
@@ -173,20 +175,6 @@ PluginComponent {
                                             source: model.coverPath ? "file://" + model.coverPath : ""
                                             fillMode: Image.PreserveAspectCrop
                                             visible: model.coverPath
-                                            
-                                            // Smooth rounding using layer effect
-                                            layer.enabled: true
-                                            layer.effect: MultiEffect {
-                                                maskEnabled: true
-                                                maskSource: maskRect
-                                            }
-                                        }
-
-                                        Rectangle {
-                                            id: maskRect
-                                            anchors.fill: parent
-                                            radius: coverContainer.radius
-                                            visible: false
                                         }
 
                                         DankIcon {
@@ -199,8 +187,8 @@ PluginComponent {
 
                                         // Play button as an icon in the bottom right
                                         DankButton {
-                                            width: 40
-                                            height: 40
+                                            width: 36
+                                            height: 36
                                             anchors.right: parent.right
                                             anchors.bottom: parent.bottom
                                             anchors.margins: Theme.spacingS
