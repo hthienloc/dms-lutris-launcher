@@ -41,7 +41,9 @@ PluginComponent {
     property var blacklist: pluginData.blacklist ?? []
 
     onPluginDataChanged: {
+        console.log("DMS-Lutris: Plugin data changed")
         if (pluginData.blacklist !== undefined) {
+            console.log("DMS-Lutris: Blacklist updated from data: " + JSON.stringify(pluginData.blacklist))
             blacklist = pluginData.blacklist
             updateFilteredModel()
         }
@@ -154,10 +156,10 @@ PluginComponent {
     }
 
     function updateFilteredModel() {
+        console.log("DMS-Lutris: Updating filtered model. Blacklist: " + JSON.stringify(root.blacklist))
         filteredGamesModel.clear()
         var query = searchQuery.toLowerCase().trim()
         
-        // Ensure we have a clean array for the set
         var currentBlacklist = root.blacklist || []
         var blackSet = new Set()
         for (var b = 0; b < currentBlacklist.length; b++) {
@@ -189,6 +191,7 @@ PluginComponent {
             }
         }
         
+        console.log("DMS-Lutris: Filtered model updated. Count: " + filteredGamesModel.count)
         filteredStatus = query === "" ? "" : filteredGamesModel.count + " of " + gamesModel.count + " games"
     }
 
@@ -245,13 +248,37 @@ PluginComponent {
             newFavs.splice(idx, 1)
         } else {
             newFavs.push(slug)
+            // If adding to favorites, remove from blacklist automatically
+            var newBlacklist = (root.blacklist || []).slice()
+            var bIdx = newBlacklist.indexOf(slug)
+            if (bIdx >= 0) {
+                newBlacklist.splice(bIdx, 1)
+                root.blacklist = newBlacklist
+            }
         }
         favorites = newFavs
         saveStats()
+        updateFilteredModel()
     }
 
     function isFavorite(slug) {
         return favorites.indexOf(slug) >= 0
+    }
+
+    function toggleBlacklist(slug) {
+        console.log("DMS-Lutris: Toggling blacklist for: " + slug)
+        var newBlacklist = (root.blacklist || []).slice()
+        var idx = newBlacklist.indexOf(slug)
+        if (idx >= 0) {
+            console.log("DMS-Lutris: Removing from blacklist")
+            newBlacklist.splice(idx, 1)
+        } else {
+            console.log("DMS-Lutris: Adding to blacklist")
+            newBlacklist.push(slug)
+        }
+        root.blacklist = newBlacklist
+        saveStats()
+        updateFilteredModel()
     }
 
     function sortGamesInternal() {
@@ -562,18 +589,8 @@ PluginComponent {
                                                         textColor: model.isBlacklisted ? Theme.primary : Theme.error
                                                         enabled: model.isBlacklisted || !root.isFavorite(model.slug)
                                                         onClicked: {
-                                                            var newBlacklist = (root.blacklist || []).slice()
-                                                            if (model.isBlacklisted) {
-                                                                var idx = newBlacklist.indexOf(model.slug)
-                                                                if (idx >= 0) newBlacklist.splice(idx, 1)
-                                                            } else {
-                                                                newBlacklist.push(model.slug)
-                                                            }
-                                                            root.blacklist = newBlacklist
-                                                            root.saveStats()
-                                                            
                                                             statsTooltip.visible = false
-                                                            Qt.callLater(root.updateFilteredModel)
+                                                            root.toggleBlacklist(model.slug)
                                                         }
                                                     }
                                                     
