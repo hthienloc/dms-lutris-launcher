@@ -14,6 +14,9 @@ PluginComponent {
     property bool isLoading: false
     property string statusMessage: ""
 
+    property int launchingId: -1
+    readonly property bool isLaunching: launchingId !== -1
+
     Component.onCompleted: {
         console.log("DMS-Lutris: Plugin initialized")
         fetchGames()
@@ -89,32 +92,56 @@ PluginComponent {
     }
 
     function launchGame(gameId, slug) {
+        if (isLaunching) return
+        
         console.log("DMS-Lutris: Launching " + slug)
+        launchingId = gameId
+        
         // Use sh -c to detach and run independently
         Proc.runCommand(
             "lutris-launch",
             ["sh", "-c", "/usr/bin/lutris lutris:rungame/" + slug + " &"],
-            null,
+            function(output, exitCode) {
+                // Command started, we can keep the loading state for a few seconds
+                // or clear it if it returns immediately. 
+                // Usually it returns fast, so let's give it 3 seconds of "launching" feel.
+                Qt.callLater(() => {
+                    var timer = Qt.createQmlObject('import QtQuick; Timer { interval: 3000; repeat: false; onTriggered: { parent.launchingId = -1; destroy(); } }', root);
+                    timer.start();
+                });
+            },
             0
         )
-        if (root.popoutProxy) root.popoutProxy.close()
+        // Note: Don't close popout immediately so user sees the loading state
     }
 
     horizontalBarPill: Component {
         DankIcon {
-            name: "sports_esports"
+            name: root.isLaunching ? "refresh" : "sports_esports"
             size: Theme.iconSizeSmall
-            color: Theme.primary
+            color: root.isLaunching ? Theme.warning : Theme.primary
             anchors.verticalCenter: parent.verticalCenter
+            
+            RotationAnimation on rotation {
+                from: 0; to: 360; duration: 1000
+                loops: Animation.Infinite
+                running: root.isLaunching
+            }
         }
     }
 
     verticalBarPill: Component {
         DankIcon {
-            name: "sports_esports"
+            name: root.isLaunching ? "refresh" : "sports_esports"
             size: Theme.iconSizeSmall
-            color: Theme.primary
+            color: root.isLaunching ? Theme.warning : Theme.primary
             anchors.horizontalCenter: parent.horizontalCenter
+            
+            RotationAnimation on rotation {
+                from: 0; to: 360; duration: 1000
+                loops: Animation.Infinite
+                running: root.isLaunching
+            }
         }
     }
 
@@ -127,7 +154,7 @@ PluginComponent {
                 id: mainContent
                 width: parent.width
                 headerText: "Lutris Games"
-                detailsText: root.statusMessage
+                detailsText: root.isLaunching ? "Launching game..." : root.statusMessage
                 showCloseButton: false
 
                 Column {
@@ -165,6 +192,7 @@ PluginComponent {
                                         color: Theme.surfaceContainer
                                         radius: Theme.roundness === "ROUND_FULL" ? 12 : (Theme.roundness === "ROUND_TWELVE" ? 12 : (Theme.roundness === "ROUND_EIGHT" ? 8 : 4))
                                         clip: true
+                                        opacity: (root.isLaunching && model.id !== root.launchingId) ? 0.5 : 1.0
 
                                         Image {
                                             id: coverImage
@@ -182,19 +210,27 @@ PluginComponent {
                                             visible: !model.coverPath
                                         }
 
-                                        // Play button as an icon in the bottom right
+                                        // Play button / Loading spinner
                                         DankButton {
                                             width: 36
                                             height: 36
                                             anchors.right: parent.right
                                             anchors.bottom: parent.bottom
                                             anchors.margins: Theme.spacingS
-                                            iconName: "play_arrow"
-                                            backgroundColor: Theme.primary
+                                            iconName: model.id === root.launchingId ? "refresh" : "play_arrow"
+                                            backgroundColor: model.id === root.launchingId ? Theme.warning : Theme.primary
                                             textColor: Theme.onPrimary
-                                            onClicked: root.launchGame(model.id, model.slug)
-                                            
+                                            enabled: !root.isLaunching
                                             radius: width / 2
+                                            
+                                            onClicked: root.launchGame(model.id, model.slug)
+
+                                            // Only rotate if this is the game being launched
+                                            RotationAnimation on rotation {
+                                                from: 0; to: 360; duration: 1000
+                                                loops: Animation.Infinite
+                                                running: model.id === root.launchingId
+                                            }
                                         }
                                     }
 
@@ -202,7 +238,7 @@ PluginComponent {
                                         width: parent.width
                                         text: model.name || model.slug
                                         font.pixelSize: Theme.fontSizeSmall
-                                        color: Theme.surfaceText
+                                        color: (root.isLaunching && model.id !== root.launchingId) ? Theme.surfaceVariantText : Theme.surfaceText
                                         horizontalAlignment: Text.AlignHCenter
                                         elide: Text.ElideRight
                                         maximumLineCount: 1
