@@ -416,6 +416,28 @@ PluginComponent {
                                         radius: Theme.roundness === "ROUND_FULL" ? 12 : (Theme.roundness === "ROUND_TWELVE" ? 12 : (Theme.roundness === "ROUND_EIGHT" ? 8 : 4))
                                         clip: true
                                         opacity: (root.isLaunching && model.id !== root.launchingId) ? 0.5 : 1.0
+                                        scale: clickAnimation.running ? 0.95 : 1.0
+
+                                        Behavior on opacity {
+                                            NumberAnimation { duration: 300 }
+                                        }
+
+                                        Behavior on scale {
+                                            NumberAnimation { duration: 100; easing.type: Easing.OutQuad }
+                                        }
+
+                                        SequentialAnimation {
+                                            id: clickAnimation
+                                            NumberAnimation { target: coverContainer; property: "scale"; to: 0.95; duration: 50 }
+                                            NumberAnimation { target: coverContainer; property: "scale"; to: 1.0; duration: 150 }
+                                        }
+
+                                        SequentialAnimation {
+                                            running: model.id === root.launchingId
+                                            loops: Animation.Infinite
+                                            NumberAnimation { target: coverContainer; property: "opacity"; from: 1.0; to: 0.8; duration: 800; easing.type: Easing.InOutQuad }
+                                            NumberAnimation { target: coverContainer; property: "opacity"; from: 0.8; to: 1.0; duration: 800; easing.type: Easing.InOutQuad }
+                                        }
 
                                         Image {
                                             id: coverImage
@@ -435,9 +457,62 @@ PluginComponent {
 
                                         MouseArea {
                                             anchors.fill: parent
-                                            visible: model.isVirtual
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: Proc.runCommand("lutris-open", ["sh", "-c", "nohup /usr/bin/lutris > /dev/null 2>&1 &"], function() {}, 0)
+                                            acceptedButtons: Qt.LeftButton | Qt.RightButton
+                                            cursorShape: (root.isLaunching && !model.isVirtual) ? Qt.ArrowCursor : Qt.PointingHandCursor
+                                            enabled: !root.isLaunching || (model.isVirtual && !root.isLaunching) // Disable during launch
+
+                                            onClicked: (mouse) => {
+                                                if (root.isLaunching) return;
+                                                
+                                                clickAnimation.start()
+
+                                                if (model.isVirtual) {
+                                                    if (mouse.button === Qt.LeftButton) {
+                                                        Proc.runCommand("lutris-open", ["sh", "-c", "nohup /usr/bin/lutris > /dev/null 2>&1 &"], function() {}, 0)
+                                                    }
+                                                    return
+                                                }
+
+                                                if (mouse.button === Qt.LeftButton) {
+                                                    root.launchGame(model.id, model.slug)
+                                                } else if (mouse.button === Qt.RightButton) {
+                                                    statsTooltip.show()
+                                                }
+                                            }
+
+                                            ToolTip {
+                                                id: statsTooltip
+                                                delay: 0
+                                                timeout: 5000
+                                                visible: false
+                                                
+                                                contentItem: Column {
+                                                    spacing: 4
+                                                    StyledText {
+                                                        text: model.name || model.slug
+                                                        font.bold: true
+                                                        color: Theme.primary
+                                                    }
+                                                    StyledText {
+                                                        text: "Play count: " + (root.playCounts[model.slug]?.count || 0)
+                                                        font.pixelSize: Theme.fontSizeSmall
+                                                    }
+                                                    StyledText {
+                                                        text: "Last played: " + (root.playCounts[model.slug]?.lastPlayed ? new Date(root.playCounts[model.slug].lastPlayed).toLocaleString() : "Never")
+                                                        font.pixelSize: Theme.fontSizeSmall
+                                                    }
+                                                }
+
+                                                background: Rectangle {
+                                                    color: Theme.surfaceContainerHighest
+                                                    radius: 8
+                                                    border.color: Theme.surfaceVariant
+                                                }
+
+                                                function show() {
+                                                    visible = true
+                                                }
+                                            }
                                         }
 
                                         DankButton {
@@ -451,35 +526,8 @@ PluginComponent {
                                             textColor: root.isFavorite(model.slug) ? Theme.onPrimary : Theme.surfaceVariantText
                                             radius: width / 2
                                             visible: !model.isVirtual
+                                            enabled: !root.isLaunching
                                             onClicked: root.toggleFavorite(model.slug)
-                                        }
-
-                                        DankButton {
-                                            width: 36
-                                            height: 36
-                                            anchors.right: parent.right
-                                            anchors.bottom: parent.bottom
-                                            anchors.margins: Theme.spacingS
-                                            iconName: model.id === root.launchingId ? "refresh" : "play_arrow"
-                                            backgroundColor: model.id === root.launchingId ? Theme.warning : Theme.primary
-                                            textColor: Theme.onPrimary
-                                            opacity: root.isLaunching && model.id !== root.launchingId ? 0.5 : 1.0
-                                            radius: width / 2
-                                            visible: !model.isVirtual
-                                            onClicked: root.launchGame(model.id, model.slug)
-
-                                            SequentialAnimation on rotation {
-                                                running: model.id === root.launchingId
-                                                loops: Animation.Infinite
-                                                NumberAnimation {
-                                                    from: rotation
-                                                    to: rotation + 360
-                                                    duration: 1000
-                                                }
-                                            }
-                                            Behavior on rotation {
-                                                NumberAnimation { duration: 200; easing.type: Easing.OutQuad }
-                                            }
                                         }
                                     }
 
