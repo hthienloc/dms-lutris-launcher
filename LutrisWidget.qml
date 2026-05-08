@@ -53,9 +53,9 @@ PluginComponent {
             var hours = Math.floor(minutes / 60)
             var days = Math.floor(hours / 24)
             
-            if (days > 0) return days + (days === 1 ? " day ago" : " days ago")
-            if (hours > 0) return hours + (hours === 1 ? " hour ago" : " hours ago")
-            if (minutes > 0) return minutes + (minutes === 1 ? " minute ago" : " minutes ago")
+            if (days > 0) return days + "d ago"
+            if (hours > 0) return hours + "h ago"
+            if (minutes > 0) return minutes + "m ago"
             return "Just now"
         }
 

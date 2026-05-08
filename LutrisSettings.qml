@@ -44,7 +44,7 @@ PluginSettings {
                     { label: "YYYY - MM - DD", value: "YYYY - MM - DD" },
                     { label: "DD / MM / YYYY", value: "DD / MM / YYYY" },
                     { label: "MM / DD / YYYY", value: "MM / DD / YYYY" },
-                    { label: "Relative (e.g. 2 days ago)", value: "relative" }
+                    { label: "Relative time", value: "relative" }
                 ]
                 defaultValue: "YYYY - MM - DD"
             }
