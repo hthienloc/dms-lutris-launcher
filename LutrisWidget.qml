@@ -556,64 +556,64 @@ PluginComponent {
                                                     statsTooltip.visible = true
                                                 }
                                             }
+                                        }
 
-                                            ToolTip {
-                                                id: statsTooltip
-                                                property string targetSlug: ""
-                                                property string targetName: ""
-                                                property bool targetIsBlacklisted: false
+                                        ToolTip {
+                                            id: statsTooltip
+                                            property string targetSlug: ""
+                                            property string targetName: ""
+                                            property bool targetIsBlacklisted: false
+                                            
+                                            delay: 0
+                                            timeout: 5000
+                                            visible: false
+                                            
+                                            contentItem: Column {
+                                                spacing: 8
+                                                StyledText {
+                                                    text: statsTooltip.targetName
+                                                    font.bold: true
+                                                    color: Theme.primary
+                                                }
+                                                StyledText {
+                                                    text: "Play count: " + (root.playCounts[statsTooltip.targetSlug]?.count || 0)
+                                                    font.pixelSize: Theme.fontSizeSmall
+                                                }
+                                                StyledText {
+                                                    text: "Last played: " + (root.playCounts[statsTooltip.targetSlug]?.lastPlayed ? new Date(root.playCounts[statsTooltip.targetSlug].lastPlayed).toLocaleString() : "Never")
+                                                    font.pixelSize: Theme.fontSizeSmall
+                                                }
                                                 
-                                                delay: 0
-                                                timeout: 5000
-                                                visible: false
+                                                Item { width: 1; height: 4 }
                                                 
-                                                contentItem: Column {
-                                                    spacing: 8
-                                                    StyledText {
-                                                        text: statsTooltip.targetName
-                                                        font.bold: true
-                                                        color: Theme.primary
-                                                    }
-                                                    StyledText {
-                                                        text: "Play count: " + (root.playCounts[statsTooltip.targetSlug]?.count || 0)
-                                                        font.pixelSize: Theme.fontSizeSmall
-                                                    }
-                                                    StyledText {
-                                                        text: "Last played: " + (root.playCounts[statsTooltip.targetSlug]?.lastPlayed ? new Date(root.playCounts[statsTooltip.targetSlug].lastPlayed).toLocaleString() : "Never")
-                                                        font.pixelSize: Theme.fontSizeSmall
-                                                    }
-                                                    
-                                                    Item { width: 1; height: 4 }
-                                                    
-                                                    DankButton {
-                                                        width: parent.width
-                                                        height: 32
-                                                        text: statsTooltip.targetIsBlacklisted ? "Unhide Game" : "Hide Game"
-                                                        iconName: statsTooltip.targetIsBlacklisted ? "visibility" : "block"
-                                                        backgroundColor: Theme.surfaceContainerHigh
-                                                        textColor: statsTooltip.targetIsBlacklisted ? Theme.primary : Theme.error
-                                                        enabled: statsTooltip.targetIsBlacklisted || !root.isFavorite(statsTooltip.targetSlug)
-                                                        onClicked: {
-                                                            statsTooltip.visible = false
-                                                            root.toggleBlacklist(statsTooltip.targetSlug)
-                                                        }
-                                                    }
-                                                    
-                                                    StyledText {
-                                                        visible: !statsTooltip.targetIsBlacklisted && root.isFavorite(statsTooltip.targetSlug)
-                                                        text: "Cannot hide favorites"
-                                                        font.pixelSize: 10
-                                                        color: Theme.error
-                                                        horizontalAlignment: Text.AlignHCenter
-                                                        width: parent.width
+                                                DankButton {
+                                                    width: parent.width
+                                                    height: 32
+                                                    text: statsTooltip.targetIsBlacklisted ? "Unhide Game" : "Hide Game"
+                                                    iconName: statsTooltip.targetIsBlacklisted ? "visibility" : "block"
+                                                    backgroundColor: Theme.surfaceContainerHigh
+                                                    textColor: statsTooltip.targetIsBlacklisted ? Theme.primary : Theme.error
+                                                    enabled: statsTooltip.targetIsBlacklisted || !root.isFavorite(statsTooltip.targetSlug)
+                                                    onClicked: {
+                                                        statsTooltip.visible = false
+                                                        root.toggleBlacklist(statsTooltip.targetSlug)
                                                     }
                                                 }
-
-                                                background: Rectangle {
-                                                    color: Theme.surfaceContainerHighest
-                                                    radius: 8
-                                                    border.color: Theme.surfaceVariant
+                                                
+                                                StyledText {
+                                                    visible: !statsTooltip.targetIsBlacklisted && root.isFavorite(statsTooltip.targetSlug)
+                                                    text: "Cannot hide favorites"
+                                                    font.pixelSize: 10
+                                                    color: Theme.error
+                                                    horizontalAlignment: Text.AlignHCenter
+                                                    width: parent.width
                                                 }
+                                            }
+
+                                            background: Rectangle {
+                                                color: Theme.surfaceContainerHighest
+                                                radius: 8
+                                                border.color: Theme.surfaceVariant
                                             }
                                         }
 
