@@ -104,9 +104,9 @@ PluginComponent {
             function(output, exitCode) {
                 // Command started, we can keep the loading state for a few seconds
                 // or clear it if it returns immediately. 
-                // Usually it returns fast, so let's give it 3 seconds of "launching" feel.
+                // Usually it returns fast, so let's give it 15 seconds of "launching" feel.
                 Qt.callLater(() => {
-                    var timer = Qt.createQmlObject('import QtQuick; Timer { interval: 3000; repeat: false; onTriggered: { parent.launchingId = -1; destroy(); } }', root);
+                    var timer = Qt.createQmlObject('import QtQuick; Timer { interval: 15000; repeat: false; onTriggered: { parent.launchingId = -1; destroy(); } }', root);
                     timer.start();
                 });
             },
