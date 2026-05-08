@@ -37,6 +37,14 @@ PluginComponent {
     property int sortMode: pluginData.sortMode ?? 0
     property var favorites: pluginData.favorites ?? []
     property var playCounts: pluginData.playCounts ?? {}
+    property var blacklist: pluginData.blacklist ?? []
+
+    onPluginDataChanged: {
+        if (pluginData.blacklist !== undefined) {
+            blacklist = pluginData.blacklist
+            updateFilteredModel()
+        }
+    }
 
     readonly property var sortModes: [
         { label: "Name", icon: "sort_by_alpha" },
@@ -96,9 +104,17 @@ PluginComponent {
                     sortGames(parsedGames)
 
                     gamesModel.clear()
+                    var gamesListForSettings = []
                     for (var i = 0; i < parsedGames.length; i++) {
                         gamesModel.append(parsedGames[i])
+                        gamesListForSettings.push({
+                            "name": parsedGames[i].name,
+                            "slug": parsedGames[i].slug
+                        })
                     }
+                    // Save full list for Settings UI
+                    pluginService?.savePluginData(pluginId, "allGames", gamesListForSettings)
+                    
                     updateFilteredModel()
                     statusMessage = parsedGames.length + " games found"
                 } catch(e) {
@@ -139,8 +155,11 @@ PluginComponent {
     function updateFilteredModel() {
         filteredGamesModel.clear()
         var query = searchQuery.toLowerCase().trim()
+        var blackSet = new Set(blacklist)
         for (var i = 0; i < gamesModel.count; i++) {
             var game = gamesModel.get(i)
+            if (blackSet.has(game.slug)) continue;
+
             var matchesSearch = query === "" || (game.name && game.name.toLowerCase().includes(query))
             var matchesFavorite = !favoriteOnly || root.isFavorite(game.slug)
             if (matchesSearch && matchesFavorite) {
@@ -179,6 +198,7 @@ PluginComponent {
             pluginService?.savePluginData(pluginId, "favorites", favorites)
             pluginService?.savePluginData(pluginId, "playCounts", playCounts)
             pluginService?.savePluginData(pluginId, "sortMode", sortMode)
+            pluginService?.savePluginData(pluginId, "blacklist", blacklist)
         } catch(e) {
             console.log("DMS-Lutris: Failed to save stats", e)
         }
@@ -487,7 +507,7 @@ PluginComponent {
                                                 visible: false
                                                 
                                                 contentItem: Column {
-                                                    spacing: 4
+                                                    spacing: 8
                                                     StyledText {
                                                         text: model.name || model.slug
                                                         font.bold: true
@@ -500,6 +520,25 @@ PluginComponent {
                                                     StyledText {
                                                         text: "Last played: " + (root.playCounts[model.slug]?.lastPlayed ? new Date(root.playCounts[model.slug].lastPlayed).toLocaleString() : "Never")
                                                         font.pixelSize: Theme.fontSizeSmall
+                                                    }
+                                                    
+                                                    Item { width: 1; height: 4 }
+                                                    
+                                                    DankButton {
+                                                        width: parent.width
+                                                        height: 32
+                                                        text: "Hide Game"
+                                                        iconName: "visibility_off"
+                                                        backgroundColor: Theme.errorContainer
+                                                        textColor: Theme.onErrorContainer
+                                                        onClicked: {
+                                                            var newBlacklist = root.blacklist.slice()
+                                                            newBlacklist.push(model.slug)
+                                                            root.blacklist = newBlacklist
+                                                            root.saveStats()
+                                                            root.updateFilteredModel()
+                                                            statsTooltip.visible = false
+                                                        }
                                                     }
                                                 }
 

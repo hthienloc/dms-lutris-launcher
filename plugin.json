@@ -9,6 +9,10 @@
     "type": "widget",
     "capabilities": ["dankbar-widget"],
     "component": "./LutrisWidget.qml",
-    "permissions": [],
+    "settings": "./LutrisSettings.qml",
+    "permissions": [
+        "settings_read",
+        "settings_write"
+    ],
     "screenshot": ""
 }
