@@ -164,9 +164,6 @@ PluginComponent {
                                         height: 180
                                         color: Theme.surfaceContainer
                                         radius: Theme.roundness === "ROUND_FULL" ? 12 : (Theme.roundness === "ROUND_TWELVE" ? 12 : (Theme.roundness === "ROUND_EIGHT" ? 8 : 4))
-                                        
-                                        // Simple and stable rounding
-                                        layer.enabled: true
                                         clip: true
 
                                         Image {
