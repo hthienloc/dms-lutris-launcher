@@ -39,11 +39,42 @@ PluginComponent {
     property var favorites: pluginData.favorites ?? []
     property var playCounts: pluginData.playCounts ?? {}
     property var blacklist: pluginData.blacklist ?? []
+    property string dateFormat: pluginData.dateFormat ?? "YYYY - MM - DD"
+
+    function getFormattedDate(timestamp) {
+        if (!timestamp) return "Never played"
+        var d = new Date(timestamp)
+        
+        if (dateFormat === "relative") {
+            var now = Date.now()
+            var diff = now - timestamp
+            var seconds = Math.floor(diff / 1000)
+            var minutes = Math.floor(seconds / 60)
+            var hours = Math.floor(minutes / 60)
+            var days = Math.floor(hours / 24)
+            
+            if (days > 0) return days + (days === 1 ? " day ago" : " days ago")
+            if (hours > 0) return hours + (hours === 1 ? " hour ago" : " hours ago")
+            if (minutes > 0) return minutes + (minutes === 1 ? " minute ago" : " minutes ago")
+            return "Just now"
+        }
+
+        var y = d.getFullYear()
+        var m = (d.getMonth() + 1).toString().padStart(2, '0')
+        var day = d.getDate().toString().padStart(2, '0')
+
+        if (dateFormat === "DD / MM / YYYY") return day + " / " + m + " / " + y
+        if (dateFormat === "MM / DD / YYYY") return m + " / " + day + " / " + y
+        return y + " - " + m + " - " + day // Default YYYY - MM - DD
+    }
 
     onPluginDataChanged: {
         if (pluginData.blacklist !== undefined) {
             blacklist = pluginData.blacklist
             updateFilteredModel()
+        }
+        if (pluginData.dateFormat !== undefined) {
+            dateFormat = pluginData.dateFormat
         }
     }
 
@@ -573,15 +604,7 @@ PluginComponent {
 
                                                 StyledText {
                                                     width: parent.width
-                                                    text: {
-                                                        var lp = root.playCounts[model.slug]?.lastPlayed
-                                                        if (!lp) return "Never played"
-                                                        var d = new Date(lp)
-                                                        var y = d.getFullYear()
-                                                        var m = (d.getMonth() + 1).toString().padStart(2, '0')
-                                                        var day = d.getDate().toString().padStart(2, '0')
-                                                        return y + " - " + m + " - " + day
-                                                    }
+                                                    text: root.getFormattedDate(root.playCounts[model.slug]?.lastPlayed)
                                                     font.bold: true
                                                     font.pixelSize: Theme.fontSizeSmall
                                                     color: Theme.primary
