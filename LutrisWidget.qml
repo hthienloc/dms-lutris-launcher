@@ -573,13 +573,19 @@ PluginComponent {
 
                                                 StyledText {
                                                     width: parent.width
-                                                    text: model.name || model.slug
+                                                    text: {
+                                                        var lp = root.playCounts[model.slug]?.lastPlayed
+                                                        if (!lp) return "Never played"
+                                                        var d = new Date(lp)
+                                                        var y = d.getFullYear()
+                                                        var m = (d.getMonth() + 1).toString().padStart(2, '0')
+                                                        var day = d.getDate().toString().padStart(2, '0')
+                                                        return y + " - " + m + " - " + day
+                                                    }
                                                     font.bold: true
                                                     font.pixelSize: Theme.fontSizeSmall
                                                     color: Theme.primary
                                                     horizontalAlignment: Text.AlignHCenter
-                                                    elide: Text.ElideRight
-                                                    maximumLineCount: 2
                                                 }
 
                                                 StyledText {
