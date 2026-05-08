@@ -533,87 +533,98 @@ PluginComponent {
                                             anchors.fill: parent
                                             acceptedButtons: Qt.LeftButton | Qt.RightButton
                                             cursorShape: (root.isLaunching && !model.isVirtual) ? Qt.ArrowCursor : Qt.PointingHandCursor
-                                            enabled: !root.isLaunching || (model.isVirtual && !root.isLaunching) // Disable during launch
+                                            enabled: !root.isLaunching || (model.isVirtual && !root.isLaunching)
 
                                             onClicked: (mouse) => {
                                                 if (root.isLaunching) return;
                                                 
-                                                clickAnimation.start()
-
                                                 if (model.isVirtual) {
                                                     if (mouse.button === Qt.LeftButton) {
+                                                        clickAnimation.start()
                                                         Proc.runCommand("lutris-open", ["sh", "-c", "nohup /usr/bin/lutris > /dev/null 2>&1 &"], function() {}, 0)
                                                     }
                                                     return
                                                 }
 
                                                 if (mouse.button === Qt.LeftButton) {
+                                                    clickAnimation.start()
                                                     root.launchGame(model.id, model.slug)
                                                 } else if (mouse.button === Qt.RightButton) {
-                                                    statsTooltip.targetSlug = model.slug
-                                                    statsTooltip.targetName = model.name || model.slug
-                                                    statsTooltip.targetIsBlacklisted = model.isBlacklisted
-                                                    statsTooltip.visible = true
+                                                    infoPanel.visible = true
                                                 }
                                             }
                                         }
 
-                                        ToolTip {
-                                            id: statsTooltip
-                                            property string targetSlug: ""
-                                            property string targetName: ""
-                                            property bool targetIsBlacklisted: false
-                                            
-                                            delay: 0
-                                            timeout: 5000
+                                        // Custom Info Panel (Replaces unreliable ToolTip)
+                                        Rectangle {
+                                            id: infoPanel
+                                            anchors.fill: parent
+                                            color: Qt.rgba(Theme.surfaceContainerHighest.r, Theme.surfaceContainerHighest.g, Theme.surfaceContainerHighest.b, 0.95)
                                             visible: false
-                                            
-                                            contentItem: Column {
-                                                spacing: 8
+                                            radius: parent.radius
+                                            z: 10
+
+                                            MouseArea {
+                                                anchors.fill: parent
+                                                onClicked: infoPanel.visible = false
+                                            }
+
+                                            Column {
+                                                anchors.centerIn: parent
+                                                width: parent.width - Theme.spacingM
+                                                spacing: Theme.spacingS
+
                                                 StyledText {
-                                                    text: statsTooltip.targetName
-                                                    font.bold: true
-                                                    color: Theme.primary
-                                                }
-                                                StyledText {
-                                                    text: "Play count: " + (root.playCounts[statsTooltip.targetSlug]?.count || 0)
-                                                    font.pixelSize: Theme.fontSizeSmall
-                                                }
-                                                StyledText {
-                                                    text: "Last played: " + (root.playCounts[statsTooltip.targetSlug]?.lastPlayed ? new Date(root.playCounts[statsTooltip.targetSlug].lastPlayed).toLocaleString() : "Never")
-                                                    font.pixelSize: Theme.fontSizeSmall
-                                                }
-                                                
-                                                Item { width: 1; height: 4 }
-                                                
-                                                DankButton {
                                                     width: parent.width
+                                                    text: model.name || model.slug
+                                                    font.bold: true
+                                                    font.pixelSize: Theme.fontSizeSmall
+                                                    color: Theme.primary
+                                                    horizontalAlignment: Text.AlignHCenter
+                                                    elide: Text.ElideRight
+                                                    maximumLineCount: 2
+                                                }
+
+                                                StyledText {
+                                                    width: parent.width
+                                                    text: "Plays: " + (root.playCounts[model.slug]?.count || 0)
+                                                    font.pixelSize: 10
+                                                    horizontalAlignment: Text.AlignHCenter
+                                                }
+
+                                                DankButton {
+                                                    width: parent.width - Theme.spacingS
                                                     height: 32
-                                                    text: statsTooltip.targetIsBlacklisted ? "Unhide Game" : "Hide Game"
-                                                    iconName: statsTooltip.targetIsBlacklisted ? "visibility" : "block"
+                                                    anchors.horizontalCenter: parent.horizontalCenter
+                                                    text: model.isBlacklisted ? "Unhide" : "Hide"
+                                                    iconName: model.isBlacklisted ? "visibility" : "block"
                                                     backgroundColor: Theme.surfaceContainerHigh
-                                                    textColor: statsTooltip.targetIsBlacklisted ? Theme.primary : Theme.error
-                                                    enabled: statsTooltip.targetIsBlacklisted || !root.isFavorite(statsTooltip.targetSlug)
+                                                    textColor: model.isBlacklisted ? Theme.primary : Theme.error
+                                                    enabled: model.isBlacklisted || !root.isFavorite(model.slug)
                                                     onClicked: {
-                                                        statsTooltip.visible = false
-                                                        root.toggleBlacklist(statsTooltip.targetSlug)
+                                                        root.toggleBlacklist(model.slug)
+                                                        infoPanel.visible = false
                                                     }
                                                 }
                                                 
                                                 StyledText {
-                                                    visible: !statsTooltip.targetIsBlacklisted && root.isFavorite(statsTooltip.targetSlug)
-                                                    text: "Cannot hide favorites"
-                                                    font.pixelSize: 10
+                                                    visible: !model.isBlacklisted && root.isFavorite(model.slug)
+                                                    text: "Can't hide favorites"
+                                                    font.pixelSize: 9
                                                     color: Theme.error
                                                     horizontalAlignment: Text.AlignHCenter
                                                     width: parent.width
                                                 }
-                                            }
 
-                                            background: Rectangle {
-                                                color: Theme.surfaceContainerHighest
-                                                radius: 8
-                                                border.color: Theme.surfaceVariant
+                                                DankButton {
+                                                    width: 40
+                                                    height: 24
+                                                    anchors.horizontalCenter: parent.horizontalCenter
+                                                    text: "Close"
+                                                    backgroundColor: "transparent"
+                                                    textColor: Theme.surfaceVariantText
+                                                    onClicked: infoPanel.visible = false
+                                                }
                                             }
                                         }
 
