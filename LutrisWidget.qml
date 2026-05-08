@@ -26,6 +26,24 @@ PluginComponent {
         id: gamesModel
     }
 
+    ListModel {
+        id: filteredGamesModel
+    }
+
+    property string searchQuery: ""
+    property string filteredStatus: ""
+    property bool favoriteOnly: false
+
+    property int sortMode: pluginData.sortMode ?? 0
+    property var favorites: pluginData.favorites ?? []
+    property var playCounts: pluginData.playCounts ?? {}
+
+    readonly property var sortModes: [
+        { label: "Name", icon: "sort_by_alpha" },
+        { label: "Recently Played", icon: "history" },
+        { label: "Most Played", icon: "trending_up" }
+    ]
+
     function fetchGames() {
         console.log("DMS-Lutris: Fetching games...")
         isLoading = true
@@ -75,12 +93,13 @@ PluginComponent {
                     var parsedGames = JSON.parse(cleanJson)
                     console.log("DMS-Lutris: Parsed " + parsedGames.length + " games")
                     
-                    parsedGames.sort((a, b) => (a.name || "").localeCompare(b.name || ""))
-                    
+                    sortGames(parsedGames)
+
                     gamesModel.clear()
                     for (var i = 0; i < parsedGames.length; i++) {
                         gamesModel.append(parsedGames[i])
                     }
+                    updateFilteredModel()
                     statusMessage = parsedGames.length + " games found"
                 } catch(e) {
                     console.error("DMS-Lutris: Error parsing JSON: " + e)
@@ -93,54 +112,199 @@ PluginComponent {
 
     function launchGame(gameId, slug) {
         if (isLaunching) return
-        
+
         console.log("DMS-Lutris: Launching " + slug)
         launchingId = gameId
-        
-        // Use sh -c to detach and run independently
+
+        var newCounts = Object.assign({}, playCounts)
+        if (!newCounts[slug]) newCounts[slug] = { count: 0, lastPlayed: 0 }
+        newCounts[slug].count++
+        newCounts[slug].lastPlayed = Date.now()
+        playCounts = newCounts
+        saveStats()
+
         Proc.runCommand(
             "lutris-launch",
             ["sh", "-c", "/usr/bin/lutris lutris:rungame/" + slug + " &"],
             function(output, exitCode) {
-                // Command started, we can keep the loading state for a few seconds
-                // or clear it if it returns immediately. 
-                // Usually it returns fast, so let's give it 15 seconds of "launching" feel.
                 Qt.callLater(() => {
-                    var timer = Qt.createQmlObject('import QtQuick; Timer { interval: 15000; repeat: false; onTriggered: { parent.launchingId = -1; destroy(); } }', root);
+                    var timer = Qt.createQmlObject('import QtQuick; Timer { interval: 20000; repeat: false; onTriggered: { parent.launchingId = -1; destroy(); } }', root);
                     timer.start();
                 });
             },
             0
         )
-        // Note: Don't close popout immediately so user sees the loading state
+    }
+
+    function updateFilteredModel() {
+        filteredGamesModel.clear()
+        var query = searchQuery.toLowerCase().trim()
+        for (var i = 0; i < gamesModel.count; i++) {
+            var game = gamesModel.get(i)
+            var matchesSearch = query === "" || (game.name && game.name.toLowerCase().includes(query))
+            var matchesFavorite = !favoriteOnly || root.isFavorite(game.slug)
+            if (matchesSearch && matchesFavorite) {
+                // Create a fresh object to avoid QML reference issues
+                filteredGamesModel.append({
+                    "id": game.id,
+                    "name": game.name,
+                    "slug": game.slug,
+                    "coverPath": game.coverPath,
+                    "isVirtual": false
+                })
+            }
+        }
+        
+        // Add virtual card at the end
+        if (query === "") {
+            filteredGamesModel.append({
+                "id": -2,
+                "name": "Add Games",
+                "slug": "lutris-main",
+                "isVirtual": true,
+                "coverPath": ""
+            })
+        }
+
+        filteredStatus = query === "" ? "" : filteredGamesModel.count + " of " + gamesModel.count + " games"
+    }
+
+    function onSearchTextChanged(text) {
+        searchQuery = text
+        updateFilteredModel()
+    }
+
+    function saveStats() {
+        try {
+            pluginService?.savePluginData(pluginId, "favorites", favorites)
+            pluginService?.savePluginData(pluginId, "playCounts", playCounts)
+            pluginService?.savePluginData(pluginId, "sortMode", sortMode)
+        } catch(e) {
+            console.log("DMS-Lutris: Failed to save stats", e)
+        }
+    }
+
+    function sortGames(games) {
+        var favSet = new Set(favorites)
+        if (sortMode === 0) {
+            games.sort((a, b) => {
+                var aFav = favSet.has(a.slug) ? 0 : 1
+                var bFav = favSet.has(b.slug) ? 0 : 1
+                if (aFav !== bFav) return aFav - bFav
+                return (a.name || "").localeCompare(b.name || "")
+            })
+        } else if (sortMode === 1) {
+            games.sort((a, b) => {
+                var aFav = favSet.has(a.slug) ? 0 : 1
+                var bFav = favSet.has(b.slug) ? 0 : 1
+                if (aFav !== bFav) return aFav - bFav
+                var aTime = (playCounts[a.slug]?.lastPlayed || 0)
+                var bTime = (playCounts[b.slug]?.lastPlayed || 0)
+                return bTime - aTime
+            })
+        } else if (sortMode === 2) {
+            games.sort((a, b) => {
+                var aFav = favSet.has(a.slug) ? 0 : 1
+                var bFav = favSet.has(b.slug) ? 0 : 1
+                if (aFav !== bFav) return aFav - bFav
+                var aCount = playCounts[a.slug]?.count || 0
+                var bCount = playCounts[b.slug]?.count || 0
+                return bCount - aCount
+            })
+        }
+    }
+
+    function toggleFavorite(slug) {
+        var newFavs = favorites.slice()
+        var idx = newFavs.indexOf(slug)
+        if (idx >= 0) {
+            newFavs.splice(idx, 1)
+        } else {
+            newFavs.push(slug)
+        }
+        favorites = newFavs
+        saveStats()
+    }
+
+    function isFavorite(slug) {
+        return favorites.indexOf(slug) >= 0
+    }
+
+    function sortGamesInternal() {
+        var games = []
+        for (var i = 0; i < gamesModel.count; i++) {
+            var g = gamesModel.get(i)
+            games.push({
+                "id": g.id,
+                "name": g.name,
+                "slug": g.slug,
+                "coverPath": g.coverPath
+            })
+        }
+        sortGames(games)
+        gamesModel.clear()
+        for (var j = 0; j < games.length; j++) {
+            gamesModel.append(games[j])
+        }
+        updateFilteredModel()
+    }
+
+    function cycleSortMode() {
+        sortMode = (sortMode + 1) % sortModes.length
+        saveStats()
+        sortGamesInternal()
     }
 
     horizontalBarPill: Component {
         DankIcon {
-            name: root.isLaunching ? "refresh" : "sports_esports"
+            name: (root.isLaunching || root.isLoading) ? "refresh" : "sports_esports"
             size: Theme.iconSizeSmall
-            color: root.isLaunching ? Theme.warning : Theme.primary
+            color: (root.isLaunching || root.isLoading) ? Theme.warning : Theme.primary
             anchors.verticalCenter: parent.verticalCenter
             
-            RotationAnimation on rotation {
+            rotation: (root.isLaunching || root.isLoading) ? 0 : 0 // Placeholder to trigger binding if needed
+
+            NumberAnimation on rotation {
                 from: 0; to: 360; duration: 1000
                 loops: Animation.Infinite
-                running: root.isLaunching
+                running: root.isLaunching || root.isLoading
+            }
+
+            Behavior on rotation {
+                enabled: !root.isLaunching && !root.isLoading
+                NumberAnimation { duration: 300; easing.type: Easing.OutQuad }
+            }
+            
+            onRotationChanged: {
+                if (!root.isLaunching && !root.isLoading && rotation !== 0) {
+                    rotation = 0
+                }
             }
         }
     }
 
     verticalBarPill: Component {
         DankIcon {
-            name: root.isLaunching ? "refresh" : "sports_esports"
+            name: (root.isLaunching || root.isLoading) ? "refresh" : "sports_esports"
             size: Theme.iconSizeSmall
-            color: root.isLaunching ? Theme.warning : Theme.primary
+            color: (root.isLaunching || root.isLoading) ? Theme.warning : Theme.primary
             anchors.horizontalCenter: parent.horizontalCenter
-            
-            RotationAnimation on rotation {
+
+            NumberAnimation on rotation {
                 from: 0; to: 360; duration: 1000
                 loops: Animation.Infinite
-                running: root.isLaunching
+                running: root.isLaunching || root.isLoading
+            }
+
+            Behavior on rotation {
+                enabled: !root.isLaunching && !root.isLoading
+                NumberAnimation { duration: 300; easing.type: Easing.OutQuad }
+            }
+            
+            onRotationChanged: {
+                if (!root.isLaunching && !root.isLoading && rotation !== 0) {
+                    rotation = 0
+                }
             }
         }
     }
@@ -161,17 +325,76 @@ PluginComponent {
                     width: parent.width
                     spacing: Theme.spacingM
 
+                    Row {
+                        width: parent.width
+                        height: 44
+                        spacing: Theme.spacingS
+
+                        DankTextField {
+                            id: searchField
+                            width: parent.width - 36 - 36 - 36 - Theme.spacingS * 3
+                            height: parent.height
+                            leftIconName: "search"
+                            placeholderText: "Search games..."
+                            backgroundColor: Theme.surfaceVariant
+                            normalBorderColor: Theme.surfaceContainerHigh
+                            onTextEdited: root.onSearchTextChanged(text)
+                        }
+
+                        DankButton {
+                            id: sortButton2
+                            width: 36
+                            height: parent.height
+                            iconName: sortModes[sortMode].icon
+                            backgroundColor: Theme.surfaceContainerHigh
+                            textColor: Theme.surfaceText
+                            onClicked: root.cycleSortMode()
+                        }
+
+                        DankButton {
+                            id: favoriteOnlyButton
+                            width: 36
+                            height: parent.height
+                            iconName: "star"
+                            backgroundColor: root.favoriteOnly ? Theme.warning : Theme.surfaceContainerHigh
+                            textColor: root.favoriteOnly ? Theme.onPrimary : Theme.surfaceText
+                            onClicked: {
+                                root.favoriteOnly = !root.favoriteOnly
+                                root.updateFilteredModel()
+                            }
+                        }
+
+                        DankButton {
+                            id: refreshButton
+                            width: 36
+                            height: parent.height
+                            iconName: "refresh"
+                            backgroundColor: Theme.surfaceContainerHigh
+                            textColor: root.isLoading ? Theme.surfaceVariantText : Theme.surfaceText
+                            onClicked: root.fetchGames()
+
+                            SequentialAnimation on rotation {
+                                running: root.isLoading
+                                loops: Animation.Infinite
+                                NumberAnimation {
+                                    from: 0; to: 360
+                                    duration: 1000
+                                }
+                            }
+                        }
+                    }
+
                     Rectangle {
                         width: parent.width
                         height: Math.min(500, gamesGrid.contentHeight)
                         color: "transparent"
                         clip: true
-                        visible: !root.isLoading && gamesModel.count > 0
+                        visible: !root.isLoading && filteredGamesModel.count > 0
 
                         GridView {
                             id: gamesGrid
                             anchors.fill: parent
-                            model: gamesModel
+                            model: filteredGamesModel
                             cellWidth: parent.width / 4
                             cellHeight: 220
                             boundsBehavior: Flickable.StopAtBounds
@@ -197,20 +420,40 @@ PluginComponent {
                                         Image {
                                             id: coverImage
                                             anchors.fill: parent
-                                            source: model.coverPath ? "file://" + model.coverPath : ""
+                                            source: (model.coverPath && !model.isVirtual) ? "file://" + model.coverPath : ""
                                             fillMode: Image.PreserveAspectCrop
-                                            visible: model.coverPath
+                                            visible: model.coverPath && !model.isVirtual
                                         }
 
                                         DankIcon {
                                             anchors.centerIn: parent
-                                            name: "image"
+                                            name: model.isVirtual ? "add" : "image"
                                             size: 32
                                             color: Theme.surfaceVariantText
-                                            visible: !model.coverPath
+                                            visible: !model.coverPath || model.isVirtual
                                         }
 
-                                        // Play button / Loading spinner
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            visible: model.isVirtual
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: Proc.runCommand("lutris-open", ["sh", "-c", "nohup /usr/bin/lutris > /dev/null 2>&1 &"], function() {}, 0)
+                                        }
+
+                                        DankButton {
+                                            width: 32
+                                            height: 32
+                                            anchors.left: parent.left
+                                            anchors.top: parent.top
+                                            anchors.margins: Theme.spacingS
+                                            iconName: root.isFavorite(model.slug) ? "star" : "star_border"
+                                            backgroundColor: root.isFavorite(model.slug) ? Theme.warning : Theme.surfaceContainerHigh
+                                            textColor: root.isFavorite(model.slug) ? Theme.onPrimary : Theme.surfaceVariantText
+                                            radius: width / 2
+                                            visible: !model.isVirtual
+                                            onClicked: root.toggleFavorite(model.slug)
+                                        }
+
                                         DankButton {
                                             width: 36
                                             height: 36
@@ -220,16 +463,22 @@ PluginComponent {
                                             iconName: model.id === root.launchingId ? "refresh" : "play_arrow"
                                             backgroundColor: model.id === root.launchingId ? Theme.warning : Theme.primary
                                             textColor: Theme.onPrimary
-                                            enabled: !root.isLaunching
+                                            opacity: root.isLaunching && model.id !== root.launchingId ? 0.5 : 1.0
                                             radius: width / 2
-                                            
+                                            visible: !model.isVirtual
                                             onClicked: root.launchGame(model.id, model.slug)
 
-                                            // Only rotate if this is the game being launched
-                                            RotationAnimation on rotation {
-                                                from: 0; to: 360; duration: 1000
-                                                loops: Animation.Infinite
+                                            SequentialAnimation on rotation {
                                                 running: model.id === root.launchingId
+                                                loops: Animation.Infinite
+                                                NumberAnimation {
+                                                    from: rotation
+                                                    to: rotation + 360
+                                                    duration: 1000
+                                                }
+                                            }
+                                            Behavior on rotation {
+                                                NumberAnimation { duration: 200; easing.type: Easing.OutQuad }
                                             }
                                         }
                                     }
@@ -258,8 +507,8 @@ PluginComponent {
                     }
 
                     StyledText {
-                        text: "No games found."
-                        visible: !root.isLoading && gamesModel.count === 0
+                        text: root.searchQuery !== "" ? "No games match your search." : "No games found."
+                        visible: !root.isLoading && filteredGamesModel.count === 0
                         anchors.horizontalCenter: parent.horizontalCenter
                         color: Theme.surfaceVariantText
                     }
