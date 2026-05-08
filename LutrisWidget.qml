@@ -167,10 +167,25 @@ PluginComponent {
                                         clip: true
 
                                         Image {
+                                            id: coverImage
                                             anchors.fill: parent
                                             source: model.coverPath ? "file://" + model.coverPath : ""
                                             fillMode: Image.PreserveAspectCrop
                                             visible: model.coverPath
+                                            
+                                            // Smooth rounding using layer effect
+                                            layer.enabled: true
+                                            layer.effect: MultiEffect {
+                                                maskEnabled: true
+                                                maskSource: maskRect
+                                            }
+                                        }
+
+                                        Rectangle {
+                                            id: maskRect
+                                            anchors.fill: parent
+                                            radius: coverContainer.radius
+                                            visible: false
                                         }
 
                                         DankIcon {
@@ -183,8 +198,8 @@ PluginComponent {
 
                                         // Play button as an icon in the bottom right
                                         DankButton {
-                                            width: 36
-                                            height: 36
+                                            width: 40
+                                            height: 40
                                             anchors.right: parent.right
                                             anchors.bottom: parent.bottom
                                             anchors.margins: Theme.spacingS
@@ -193,7 +208,6 @@ PluginComponent {
                                             textColor: Theme.onPrimary
                                             onClicked: root.launchGame(model.id, model.slug)
                                             
-                                            // Make it circular if the theme allows
                                             radius: width / 2
                                         }
                                     }
