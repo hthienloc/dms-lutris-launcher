@@ -264,19 +264,14 @@ PluginComponent {
     }
 
     function toggleBlacklist(slug) {
-        console.log("DMS-Lutris: Toggling blacklist for: " + slug)
-        var newBlacklist = (root.blacklist || []).slice()
-        var idx = newBlacklist.indexOf(slug)
+        var currentBlacklist = (pluginData.blacklist || []).slice()
+        var idx = currentBlacklist.indexOf(slug)
         if (idx >= 0) {
-            console.log("DMS-Lutris: Removing from blacklist")
-            newBlacklist.splice(idx, 1)
+            currentBlacklist.splice(idx, 1)
         } else {
-            console.log("DMS-Lutris: Adding to blacklist")
-            newBlacklist.push(slug)
+            currentBlacklist.push(slug)
         }
-        root.blacklist = newBlacklist
-        saveStats()
-        updateFilteredModel()
+        pluginService.savePluginData(pluginId, "blacklist", currentBlacklist)
     }
 
     function sortGamesInternal() {
@@ -564,6 +559,8 @@ PluginComponent {
                                             radius: parent.radius
                                             z: 10
 
+                                            // This MouseArea intercepts clicks to prevent launching the game
+                                            // while the info panel is open.
                                             MouseArea {
                                                 anchors.fill: parent
                                                 onClicked: infoPanel.visible = false
@@ -601,10 +598,15 @@ PluginComponent {
                                                     backgroundColor: Theme.surfaceContainerHigh
                                                     textColor: model.isBlacklisted ? Theme.primary : Theme.error
                                                     enabled: model.isBlacklisted || !root.isFavorite(model.slug)
+                                                    
+                                                    // Explicitly handle clicks and prevent propagation
                                                     onClicked: {
                                                         root.toggleBlacklist(model.slug)
                                                         infoPanel.visible = false
                                                     }
+                                                    
+                                                    // Ensure the button is above the panel's close-MouseArea
+                                                    z: 11
                                                 }
                                                 
                                                 StyledText {
@@ -624,6 +626,7 @@ PluginComponent {
                                                     backgroundColor: "transparent"
                                                     textColor: Theme.surfaceVariantText
                                                     onClicked: infoPanel.visible = false
+                                                    z: 11
                                                 }
                                             }
                                         }
