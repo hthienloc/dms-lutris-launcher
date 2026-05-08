@@ -156,7 +156,14 @@ PluginComponent {
     function updateFilteredModel() {
         filteredGamesModel.clear()
         var query = searchQuery.toLowerCase().trim()
-        var blackSet = new Set(blacklist)
+        
+        // Ensure we have a clean array for the set
+        var currentBlacklist = root.blacklist || []
+        var blackSet = new Set()
+        for (var b = 0; b < currentBlacklist.length; b++) {
+            blackSet.add(currentBlacklist[b])
+        }
+
         for (var i = 0; i < gamesModel.count; i++) {
             var game = gamesModel.get(i)
             var isBlacklisted = blackSet.has(game.slug)
@@ -555,7 +562,7 @@ PluginComponent {
                                                         textColor: model.isBlacklisted ? Theme.primary : Theme.error
                                                         enabled: model.isBlacklisted || !root.isFavorite(model.slug)
                                                         onClicked: {
-                                                            var newBlacklist = root.blacklist.slice()
+                                                            var newBlacklist = (root.blacklist || []).slice()
                                                             if (model.isBlacklisted) {
                                                                 var idx = newBlacklist.indexOf(model.slug)
                                                                 if (idx >= 0) newBlacklist.splice(idx, 1)
@@ -564,8 +571,9 @@ PluginComponent {
                                                             }
                                                             root.blacklist = newBlacklist
                                                             root.saveStats()
-                                                            root.updateFilteredModel()
+                                                            
                                                             statsTooltip.visible = false
+                                                            Qt.callLater(root.updateFilteredModel)
                                                         }
                                                     }
                                                     
