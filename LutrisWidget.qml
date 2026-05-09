@@ -517,7 +517,7 @@ PluginComponent {
                             boundsBehavior: Flickable.StopAtBounds
                             focus: false // Only gains focus via Tab or navigation
                             
-                            highlightFollowsCurrentItem: false
+                            highlightFollowsCurrentItem: true
                             highlightMoveDuration: 0
                             keyNavigationEnabled: true
                             
@@ -582,7 +582,10 @@ PluginComponent {
                                         radius: Theme.roundness === "ROUND_FULL" ? 12 : (Theme.roundness === "ROUND_TWELVE" ? 12 : (Theme.roundness === "ROUND_EIGHT" ? 8 : 4))
                                         clip: true
                                         opacity: (root.isLaunching && model.id !== root.launchingId) ? 0.5 : 1.0
+                                        scale: delegateItem.isCurrent ? 1.03 : 1.0
                                         z: delegateItem.isCurrent ? 5 : 1
+                                        
+                                        Behavior on scale { NumberAnimation { duration: 150 } }
 
                                         Rectangle {
                                             anchors.fill: parent
