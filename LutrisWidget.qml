@@ -575,12 +575,8 @@ PluginComponent {
                                         clip: true
                                         opacity: (root.isLaunching && model.id !== root.launchingId) ? 0.5 : 1.0
                                         scale: clickAnimation.running ? 0.95 : (delegateItem.isCurrent ? 1.05 : 1.0)
-                                        
-                                        border.width: delegateItem.isCurrent ? 4 : 0
-                                        border.color: Theme.primary
                                         z: delegateItem.isCurrent ? 5 : 1
 
-                                        Behavior on border.width { NumberAnimation { duration: 150 } }
                                         Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutQuad } }
 
                                         Behavior on opacity {
@@ -606,6 +602,17 @@ PluginComponent {
                                             source: (model.coverPath && !model.isVirtual) ? "file://" + model.coverPath : ""
                                             fillMode: Image.PreserveAspectCrop
                                             visible: model.coverPath && !model.isVirtual
+                                        }
+
+                                        // Focus Highlight Border (On top of image)
+                                        Rectangle {
+                                            anchors.fill: parent
+                                            color: "transparent"
+                                            border.width: delegateItem.isCurrent ? 3 : 0
+                                            border.color: Theme.primary
+                                            radius: parent.radius
+                                            z: 2
+                                            Behavior on border.width { NumberAnimation { duration: 150 } }
                                         }
 
                                         DankIcon {
