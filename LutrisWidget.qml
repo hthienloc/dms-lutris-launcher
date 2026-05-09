@@ -18,7 +18,7 @@ PluginComponent {
     readonly property bool isLaunching: launchingId !== -1
 
     Component.onCompleted: {
-        console.log("DMS-Lutris: Plugin initialized")
+        console.log("Lutris Launcher: Plugin initialized")
         fetchGames()
     }
 
@@ -85,22 +85,22 @@ PluginComponent {
     ]
 
     function fetchGames() {
-        console.log("DMS-Lutris: Fetching games...")
+        console.log("Lutris Launcher: Fetching games...")
         isLoading = true
         statusMessage = "Loading games..."
         
         Proc.runCommand(
-            "lutris-fetch",
+            "lutris-launcher-fetch",
             ["/usr/bin/lutris", "-l", "-o", "-j"],
             function(output, exitCode) {
-                console.log("DMS-Lutris: Fetch finished with exit code: " + exitCode)
+                console.log("Lutris Launcher: Fetch finished with exit code: " + exitCode)
                 isLoading = false
                 if (exitCode !== 0 && exitCode !== 124) { // 124 is timeout but might have data
                     statusMessage = "Error fetching games"
                     return
                 }
                 if (!output || output.trim() === "") {
-                    console.log("DMS-Lutris: No output from Lutris")
+                    console.log("Lutris Launcher: No output from Lutris")
                     gamesModel.clear()
                     statusMessage = "No installed games found"
                     return
@@ -124,14 +124,14 @@ PluginComponent {
                     var start = cleanJson.indexOf("[")
                     var end = cleanJson.lastIndexOf("]")
                     if (start === -1 || end === -1) {
-                        console.error("DMS-Lutris: No JSON array found after cleaning")
+                        console.error("Lutris Launcher: No JSON array found after cleaning")
                         statusMessage = "Data format error"
                         return
                     }
                     cleanJson = cleanJson.substring(start, end + 1)
                     
                     var parsedGames = JSON.parse(cleanJson)
-                    console.log("DMS-Lutris: Parsed " + parsedGames.length + " games")
+                    console.log("Lutris Launcher: Parsed " + parsedGames.length + " games")
                     
                     sortGames(parsedGames)
 
@@ -150,7 +150,7 @@ PluginComponent {
                     updateFilteredModel()
                     statusMessage = parsedGames.length + " games found"
                 } catch(e) {
-                    console.error("DMS-Lutris: Error parsing JSON: " + e)
+                    console.error("Lutris Launcher: Error parsing JSON: " + e)
                     statusMessage = "Error parsing game list"
                 }
             },
@@ -161,7 +161,7 @@ PluginComponent {
     function launchGame(gameId, slug) {
         if (isLaunching) return
 
-        console.log("DMS-Lutris: Launching " + slug)
+        console.log("Lutris Launcher: Launching " + slug)
         launchingId = gameId
 
         var newCounts = Object.assign({}, playCounts)
@@ -172,7 +172,7 @@ PluginComponent {
         saveStats()
 
         Proc.runCommand(
-            "lutris-launch",
+            "lutris-launcher-launch",
             ["sh", "-c", "/usr/bin/lutris lutris:rungame/" + slug + " &"],
             function(output, exitCode) {
                 Qt.callLater(() => {
@@ -185,7 +185,7 @@ PluginComponent {
     }
 
     function updateFilteredModel() {
-        console.log("DMS-Lutris: Updating filtered model. Blacklist: " + JSON.stringify(root.blacklist))
+        console.log("Lutris Launcher: Updating filtered model. Blacklist: " + JSON.stringify(root.blacklist))
         filteredGamesModel.clear()
         var query = searchQuery.toLowerCase().trim()
         
@@ -220,7 +220,7 @@ PluginComponent {
             }
         }
         
-        console.log("DMS-Lutris: Filtered model updated. Count: " + filteredGamesModel.count)
+        console.log("Lutris Launcher: Filtered model updated. Count: " + filteredGamesModel.count)
         filteredStatus = query === "" ? "" : filteredGamesModel.count + " of " + gamesModel.count + " games"
     }
 
@@ -236,7 +236,7 @@ PluginComponent {
             pluginService?.savePluginData(pluginId, "sortMode", sortMode)
             pluginService?.savePluginData(pluginId, "blacklist", blacklist)
         } catch(e) {
-            console.log("DMS-Lutris: Failed to save stats", e)
+            console.log("Lutris Launcher: Failed to save stats", e)
         }
     }
 
@@ -386,13 +386,25 @@ PluginComponent {
 
     popoutContent: Component {
         FocusScope {
+            id: contentFocusScope
             width: parent ? parent.width : 0
             implicitHeight: mainContent.implicitHeight
+            focus: true
+
+            property var parentPopout: null
+            Connections {
+                target: parentPopout
+                function onOpened() {
+                    Qt.callLater(() => {
+                        searchField.forceActiveFocus();
+                    });
+                }
+            }
 
             PopoutComponent {
                 id: mainContent
                 width: parent.width
-                headerText: "Lutris Games"
+                headerText: "Lutris Launcher"
                 detailsText: root.isLaunching ? "Launching game..." : root.statusMessage
                 showCloseButton: false
 
@@ -413,7 +425,14 @@ PluginComponent {
                             placeholderText: "Search games..."
                             backgroundColor: Theme.surfaceVariant
                             normalBorderColor: Theme.surfaceContainerHigh
+                            showClearButton: true
                             onTextEdited: root.onSearchTextChanged(text)
+                            onTextChanged: {
+                                if (text === "") {
+                                    root.searchQuery = "";
+                                    root.updateFilteredModel();
+                                }
+                            }
                         }
 
                         DankButton {
@@ -567,7 +586,7 @@ PluginComponent {
                                                 if (model.isVirtual) {
                                                     if (mouse.button === Qt.LeftButton) {
                                                         clickAnimation.start()
-                                                        Proc.runCommand("lutris-open", ["sh", "-c", "nohup /usr/bin/lutris > /dev/null 2>&1 &"], function() {}, 0)
+                                                        Proc.runCommand("lutris-launcher-open", ["sh", "-c", "nohup /usr/bin/lutris > /dev/null 2>&1 &"], function() {}, 0)
                                                     }
                                                     return
                                                 }

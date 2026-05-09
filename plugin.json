@@ -1,6 +1,6 @@
 {
-    "id": "lutris",
-    "name": "Lutris",
+    "id": "lutrisLauncher",
+    "name": "Lutris Launcher",
     "description": "Launch your Lutris games directly from the shell",
     "version": "1.0.0",
     "license": "GPL-3.0",

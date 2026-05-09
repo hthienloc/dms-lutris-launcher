@@ -1,4 +1,4 @@
-# DMS Lutris Plugin
+# Lutris Launcher Plugin
 
 A modern, clean, and essential plugin for DankMaterialShell (DMS) that allows you to list and launch your installed Lutris games directly from the shell bar with a highly interactive grid interface.
 
@@ -37,9 +37,9 @@ A modern, clean, and essential plugin for DankMaterialShell (DMS) that allows yo
 - Quickshell and DMS framework.
 
 ## Installation
-1. Copy the `dms-lutris` folder to your DMS plugins directory:
+1. Copy the `dms-lutris-launcher` folder to your DMS plugins directory:
    ```bash
-   cp -r dms-lutris ~/.config/DankMaterialShell/plugins/
+   cp -r dms-lutris-launcher ~/.config/DankMaterialShell/plugins/
    ```
 2. Restart DMS or reload plugins.
 

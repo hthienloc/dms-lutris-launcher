@@ -7,11 +7,11 @@ import qs.Modules.Plugins
 
 PluginSettings {
     id: root
-    pluginId: "lutris"
+    pluginId: "lutrisLauncher"
 
     StyledText {
         width: parent.width
-        text: "Lutris Settings"
+        text: "Lutris Launcher Settings"
         font.pixelSize: Theme.fontSizeLarge
         font.weight: Font.Bold
         color: Theme.surfaceText
