@@ -438,10 +438,17 @@ PluginComponent {
                                     root.updateFilteredModel();
                                 }
                             }
-                            KeyNavigation.tab: gamesGrid
+                            Keys.onTabPressed: {
+                                if (filteredGamesModel.count > 0) {
+                                    gamesGrid.currentIndex = 0;
+                                    gamesGrid.forceActiveFocus();
+                                }
+                            }
                             Keys.onDownPressed: {
-                                gamesGrid.focus = true;
-                                gamesGrid.currentIndex = 0;
+                                if (filteredGamesModel.count > 0) {
+                                    gamesGrid.currentIndex = 0;
+                                    gamesGrid.forceActiveFocus();
+                                }
                             }
                         }
 
