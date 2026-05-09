@@ -424,12 +424,13 @@ PluginComponent {
 
                         DankTextField {
                             id: searchField
-                            width: parent.width - 36 - 36 - 36 - 36 - 36 - Theme.spacingS * 5
+                            width: parent.width - (36 + Theme.spacingS) * 5 - Theme.spacingS
                             height: parent.height
                             leftIconName: "search"
-                            placeholderText: "Search games..."
-                            backgroundColor: Theme.surfaceVariant
-                            normalBorderColor: Theme.surfaceContainerHigh
+                            placeholderText: "Search your library..."
+                            backgroundColor: Theme.surfaceContainerLow
+                            normalBorderColor: "transparent"
+                            focusBorderColor: Theme.primary
                             showClearButton: true
                             onTextEdited: root.onSearchTextChanged(text)
                             onTextChanged: {
@@ -444,78 +445,60 @@ PluginComponent {
                                     gamesGrid.forceActiveFocus();
                                 }
                             }
-                            Keys.onDownPressed: {
-                                if (filteredGamesModel.count > 0) {
-                                    gamesGrid.currentIndex = 0;
-                                    gamesGrid.forceActiveFocus();
+                        }
+
+                        Row {
+                            height: parent.height
+                            spacing: Theme.spacingXS
+
+                            DankButton {
+                                width: 36; height: 36; iconName: sortModes[sortMode].icon
+                                backgroundColor: Theme.surfaceContainerHigh
+                                textColor: Theme.surfaceText
+                                onClicked: root.cycleSortMode()
+                                tooltip: "Sort: " + sortModes[sortMode].label
+                            }
+
+                            DankButton {
+                                width: 36; height: 36; iconName: "star"
+                                backgroundColor: root.favoriteOnly ? Theme.warning : Theme.surfaceContainerHigh
+                                textColor: root.favoriteOnly ? Theme.onPrimary : Theme.surfaceText
+                                onClicked: {
+                                    root.favoriteOnly = !root.favoriteOnly
+                                    if (root.favoriteOnly) root.blacklistOnly = false
+                                    root.updateFilteredModel()
                                 }
                             }
-                        }
 
-                        DankButton {
-                            id: sortButton2
-                            width: 36
-                            height: parent.height
-                            iconName: sortModes[sortMode].icon
-                            backgroundColor: Theme.surfaceContainerHigh
-                            textColor: Theme.surfaceText
-                            onClicked: root.cycleSortMode()
-                        }
-
-                        DankButton {
-                            id: favoriteOnlyButton
-                            width: 36
-                            height: parent.height
-                            iconName: "star"
-                            backgroundColor: root.favoriteOnly ? Theme.warning : Theme.surfaceContainerHigh
-                            textColor: root.favoriteOnly ? Theme.onPrimary : Theme.surfaceText
-                            onClicked: {
-                                root.favoriteOnly = !root.favoriteOnly
-                                if (root.favoriteOnly) root.blacklistOnly = false
-                                root.updateFilteredModel()
-                            }
-                        }
-
-                        DankButton {
-                            id: blacklistOnlyButton
-                            width: 36
-                            height: parent.height
-                            iconName: "visibility_off"
-                            backgroundColor: root.blacklistOnly ? Theme.error : Theme.surfaceContainerHigh
-                            textColor: root.blacklistOnly ? Theme.onPrimary : Theme.surfaceText
-                            onClicked: {
-                                root.blacklistOnly = !root.blacklistOnly
-                                if (root.blacklistOnly) root.favoriteOnly = false
-                                root.updateFilteredModel()
-                            }
-                        }
-
-                        DankButton {
-                            id: settingsButton
-                            width: 36
-                            height: parent.height
-                            iconName: "settings"
-                            backgroundColor: Theme.surfaceContainerHigh
-                            textColor: Theme.surfaceText
-                            onClicked: pluginService.showPluginSettings(root.pluginId)
-                        }
-
-                        DankButton {
-                            id: refreshButton
-                            width: 36
-                            height: parent.height
-                            iconName: "refresh"
-                            backgroundColor: Theme.surfaceContainerHigh
-                            textColor: root.isLoading ? Theme.surfaceVariantText : Theme.surfaceText
-                            onClicked: root.fetchGames()
-
-                            SequentialAnimation on rotation {
-                                running: root.isLoading
-                                loops: Animation.Infinite
-                                NumberAnimation {
-                                    from: 0; to: 360
-                                    duration: 1000
+                            DankButton {
+                                width: 36; height: 36; iconName: "visibility_off"
+                                backgroundColor: root.blacklistOnly ? Theme.error : Theme.surfaceContainerHigh
+                                textColor: root.blacklistOnly ? Theme.onPrimary : Theme.surfaceText
+                                onClicked: {
+                                    root.blacklistOnly = !root.blacklistOnly
+                                    if (root.blacklistOnly) root.favoriteOnly = false
+                                    root.updateFilteredModel()
                                 }
+                            }
+
+                            DankButton {
+                                width: 36; height: 36; iconName: "refresh"
+                                backgroundColor: Theme.surfaceContainerHigh
+                                textColor: root.isLoading ? Theme.surfaceVariantText : Theme.surfaceText
+                                onClicked: root.fetchGames()
+                                rotation: root.isLoading ? 0 : 0
+                                RotationAnimator on rotation {
+                                    from: 0; to: 360; duration: 1000
+                                    loops: Animation.Infinite
+                                    running: root.isLoading
+                                }
+                            }
+
+                            DankButton {
+                                width: 36; height: 36; iconName: "settings"
+                                backgroundColor: Theme.surfaceContainerHigh
+                                textColor: Theme.surfaceText
+                                onClicked: pluginService.showPluginSettings(root.pluginId)
                             }
                         }
                     }
@@ -605,11 +588,20 @@ PluginComponent {
                                             NumberAnimation { target: coverContainer; property: "scale"; to: 1.0; duration: 150 }
                                         }
 
-                                        SequentialAnimation {
-                                            running: model.id === root.launchingId
-                                            loops: Animation.Infinite
-                                            NumberAnimation { target: coverContainer; property: "opacity"; from: 1.0; to: 0.8; duration: 800; easing.type: Easing.InOutQuad }
-                                            NumberAnimation { target: coverContainer; property: "opacity"; from: 0.8; to: 1.0; duration: 800; easing.type: Easing.InOutQuad }
+                                        // Pulse animation when launching
+                                        Rectangle {
+                                            anchors.fill: parent
+                                            color: "transparent"
+                                            border.width: model.id === root.launchingId ? 4 : 0
+                                            border.color: Theme.warning
+                                            radius: parent.radius
+                                            visible: model.id === root.launchingId
+                                            
+                                            SequentialAnimation on opacity {
+                                                loops: Animation.Infinite
+                                                NumberAnimation { from: 1.0; to: 0.4; duration: 800; easing.type: Easing.InOutQuad }
+                                                NumberAnimation { from: 0.4; to: 1.0; duration: 800; easing.type: Easing.InOutQuad }
+                                            }
                                         }
 
                                         Image {
@@ -642,6 +634,7 @@ PluginComponent {
                                         MouseArea {
                                             anchors.fill: parent
                                             acceptedButtons: Qt.LeftButton | Qt.RightButton
+                                            hoverEnabled: true
                                             cursorShape: (root.isLaunching && !model.isVirtual) ? Qt.ArrowCursor : Qt.PointingHandCursor
                                             enabled: !root.isLaunching || (model.isVirtual && !root.isLaunching)
 
@@ -665,17 +658,27 @@ PluginComponent {
                                             }
                                         }
 
-                                        // Custom Info Panel (Replaces unreliable ToolTip)
+                                        // Hover Highlight
+                                        Rectangle {
+                                            anchors.fill: parent
+                                            color: Theme.primary
+                                            opacity: parent.containsMouse ? 0.1 : 0
+                                            radius: parent.radius
+                                            Behavior on opacity { NumberAnimation { duration: 200 } }
+                                        }
+
+                                        // Custom Info Panel (Glassmorphism)
                                         Rectangle {
                                             id: infoPanel
                                             anchors.fill: parent
-                                            color: Qt.rgba(Theme.surfaceContainerHighest.r, Theme.surfaceContainerHighest.g, Theme.surfaceContainerHighest.b, 0.95)
+                                            color: Qt.rgba(Theme.surfaceContainerHighest.r, Theme.surfaceContainerHighest.g, Theme.surfaceContainerHighest.b, 0.85)
                                             visible: false
                                             radius: parent.radius
                                             z: 10
+                                            
+                                            border.width: 1
+                                            border.color: Qt.rgba(1, 1, 1, 0.1)
 
-                                            // This MouseArea intercepts clicks to prevent launching the game
-                                            // while the info panel is open.
                                             MouseArea {
                                                 anchors.fill: parent
                                                 onClicked: infoPanel.visible = false
@@ -764,10 +767,27 @@ PluginComponent {
                                         width: parent.width
                                         text: model.name || model.slug
                                         font.pixelSize: Theme.fontSizeSmall
+                                        font.weight: delegateItem.isCurrent ? Font.Bold : Font.Normal
                                         color: (root.isLaunching && model.id !== root.launchingId) ? Theme.surfaceVariantText : Theme.surfaceText
                                         horizontalAlignment: Text.AlignHCenter
                                         elide: Text.ElideRight
                                         maximumLineCount: 1
+                                    }
+                                }
+
+                                opacity: 0
+                                transform: Translate { y: 20 }
+                                
+                                Component.onCompleted: {
+                                    entryAnimation.start()
+                                }
+                                
+                                SequentialAnimation {
+                                    id: entryAnimation
+                                    PauseAnimation { duration: model.index * 50 }
+                                    ParallelAnimation {
+                                        NumberAnimation { target: delegateItem; property: "opacity"; to: 1.0; duration: 400; easing.type: Easing.OutCubic }
+                                        NumberAnimation { target: delegateItem.transform[0]; property: "y"; to: 0; duration: 400; easing.type: Easing.OutCubic }
                                     }
                                 }
                             }
@@ -776,18 +796,61 @@ PluginComponent {
                         }
                     }
 
-                    StyledText {
-                        text: "Loading..."
+                    Column {
+                        anchors.centerIn: parent
+                        spacing: Theme.spacingM
                         visible: root.isLoading
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        color: Theme.surfaceVariantText
+                        
+                        DankIcon {
+                            name: "refresh"
+                            size: 48
+                            color: Theme.primary
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            RotationAnimator on rotation {
+                                from: 0; to: 360; duration: 1000; loops: Animation.Infinite; running: root.isLoading
+                            }
+                        }
+                        
+                        StyledText {
+                            text: "Synchronizing with Lutris..."
+                            font.pixelSize: Theme.fontSizeMedium
+                            color: Theme.surfaceVariantText
+                            anchors.horizontalCenter: parent.horizontalCenter
+                        }
                     }
 
-                    StyledText {
-                        text: root.searchQuery !== "" ? "No games match your search." : "No games found."
+                    Column {
+                        anchors.centerIn: parent
+                        width: parent.width - 64
+                        spacing: Theme.spacingM
                         visible: !root.isLoading && filteredGamesModel.count === 0
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        color: Theme.surfaceVariantText
+                        
+                        DankIcon {
+                            name: root.searchQuery !== "" ? "search_off" : "sports_esports"
+                            size: 48
+                            color: Theme.surfaceContainerHighest
+                            anchors.horizontalCenter: parent.horizontalCenter
+                        }
+                        
+                        StyledText {
+                            text: root.searchQuery !== "" ? "No matches for '" + root.searchQuery + "'" : "Your library is empty"
+                            font.pixelSize: Theme.fontSizeMedium
+                            color: Theme.surfaceVariantText
+                            horizontalAlignment: Text.AlignHCenter
+                            width: parent.width
+                        }
+                        
+                        DankButton {
+                            text: "Clear Filters"
+                            visible: root.searchQuery !== "" || root.favoriteOnly || root.blacklistOnly
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            onClicked: {
+                                root.searchQuery = ""
+                                root.favoriteOnly = false
+                                root.blacklistOnly = false
+                                root.updateFilteredModel()
+                            }
+                        }
                     }
                 }
             }
