@@ -512,13 +512,34 @@ PluginComponent {
                             anchors.fill: parent
                             visible: !root.isLoading && filteredGamesModel.count > 0
                             model: filteredGamesModel
-                            cellWidth: parent.width / 4
+                            cellWidth: Math.floor(parent.width / 4)
                             cellHeight: 220
                             boundsBehavior: Flickable.StopAtBounds
                             focus: false // Only gains focus via Tab or navigation
                             
                             highlightFollowsCurrentItem: true
+                            highlightMoveDuration: 200
+                            highlightResizeDuration: 200
                             keyNavigationEnabled: true
+                            
+                            highlight: Item {
+                                z: 10
+                                Rectangle {
+                                    anchors.fill: parent
+                                    anchors.margins: Theme.spacingXS
+                                    color: "transparent"
+                                    border.color: Theme.primary
+                                    border.width: 2
+                                    radius: 12 // Match coverContainer radius
+                                    
+                                    Rectangle {
+                                        anchors.fill: parent
+                                        anchors.margins: 1
+                                        color: Theme.withAlpha(Theme.primary, 0.1)
+                                        radius: parent.radius - 1
+                                    }
+                                }
+                            }
                             
                             Keys.onTabPressed: {
                                 if (currentIndex < count - 1) {
