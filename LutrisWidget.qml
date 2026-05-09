@@ -539,6 +539,14 @@ PluginComponent {
                                     currentIndex = 0;
                                 }
                             }
+
+                            Keys.onBacktabPressed: {
+                                if (currentIndex > 0) {
+                                    currentIndex--;
+                                } else {
+                                    searchField.forceActiveFocus();
+                                }
+                            }
                             
                             Keys.onReturnPressed: launchCurrent()
                             Keys.onEnterPressed: launchCurrent()
