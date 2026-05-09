@@ -438,6 +438,11 @@ PluginComponent {
                                     root.updateFilteredModel();
                                 }
                             }
+                            KeyNavigation.tab: gamesGrid
+                            Keys.onDownPressed: {
+                                gamesGrid.focus = true;
+                                gamesGrid.currentIndex = 0;
+                            }
                         }
 
                         DankButton {
@@ -522,6 +527,32 @@ PluginComponent {
                             cellWidth: parent.width / 4
                             cellHeight: 220
                             boundsBehavior: Flickable.StopAtBounds
+                            focus: false // Only gains focus via Tab or navigation
+                            
+                            highlightFollowsCurrentItem: true
+                            keyNavigationEnabled: true
+                            
+                            Keys.onTabPressed: {
+                                if (currentIndex < count - 1) {
+                                    currentIndex++;
+                                } else {
+                                    currentIndex = 0;
+                                }
+                            }
+                            
+                            Keys.onReturnPressed: launchCurrent()
+                            Keys.onEnterPressed: launchCurrent()
+                            
+                            function launchCurrent() {
+                                var item = model.get(currentIndex);
+                                if (item) {
+                                    if (item.isVirtual) {
+                                        Proc.runCommand("lutris-launcher-open", ["sh", "-c", "nohup /usr/bin/lutris > /dev/null 2>&1 &"], function() {}, 0);
+                                    } else {
+                                        root.launchGame(item.id, item.slug);
+                                    }
+                                }
+                            }
 
                             delegate: Item {
                                 width: gamesGrid.cellWidth
@@ -540,14 +571,16 @@ PluginComponent {
                                         radius: Theme.roundness === "ROUND_FULL" ? 12 : (Theme.roundness === "ROUND_TWELVE" ? 12 : (Theme.roundness === "ROUND_EIGHT" ? 8 : 4))
                                         clip: true
                                         opacity: (root.isLaunching && model.id !== root.launchingId) ? 0.5 : 1.0
-                                        scale: clickAnimation.running ? 0.95 : 1.0
+                                        scale: clickAnimation.running ? 0.95 : (GridView.isCurrentItem && gamesGrid.activeFocus ? 1.02 : 1.0)
+                                        
+                                        border.width: (GridView.isCurrentItem && gamesGrid.activeFocus) ? 3 : 0
+                                        border.color: Theme.primary
+
+                                        Behavior on border.width { NumberAnimation { duration: 150 } }
+                                        Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutQuad } }
 
                                         Behavior on opacity {
                                             NumberAnimation { duration: 300 }
-                                        }
-
-                                        Behavior on scale {
-                                            NumberAnimation { duration: 100; easing.type: Easing.OutQuad }
                                         }
 
                                         SequentialAnimation {
