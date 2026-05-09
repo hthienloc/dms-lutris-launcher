@@ -517,28 +517,11 @@ PluginComponent {
                             boundsBehavior: Flickable.StopAtBounds
                             focus: false // Only gains focus via Tab or navigation
                             
-                            highlightFollowsCurrentItem: true
-                            highlightMoveDuration: 200
+                            highlightFollowsCurrentItem: false
+                            highlightMoveDuration: 0
                             keyNavigationEnabled: true
                             
-                            highlight: Item {
-                                z: 10
-                                Rectangle {
-                                    anchors.fill: parent
-                                    anchors.margins: Theme.spacingXS
-                                    color: "transparent"
-                                    border.color: Theme.primary
-                                    border.width: 2
-                                    radius: 12 // Match coverContainer radius
-                                    
-                                    Rectangle {
-                                        anchors.fill: parent
-                                        anchors.margins: 1
-                                        color: Theme.withAlpha(Theme.primary, 0.1)
-                                        radius: parent.radius - 1
-                                    }
-                                }
-                            }
+                            highlight: null
                             
                             Keys.onTabPressed: {
                                 if (currentIndex < count - 1) {
@@ -599,7 +582,6 @@ PluginComponent {
                                         radius: Theme.roundness === "ROUND_FULL" ? 12 : (Theme.roundness === "ROUND_TWELVE" ? 12 : (Theme.roundness === "ROUND_EIGHT" ? 8 : 4))
                                         clip: true
                                         opacity: (root.isLaunching && model.id !== root.launchingId) ? 0.5 : 1.0
-                                        scale: delegateItem.isCurrent ? 1.05 : 1.0
                                         z: delegateItem.isCurrent ? 5 : 1
 
                                         Rectangle {
@@ -622,12 +604,13 @@ PluginComponent {
                                         // Focus Highlight Border (On top of image)
                                         Rectangle {
                                             anchors.fill: parent
-                                            color: "transparent"
-                                            border.width: delegateItem.isCurrent ? 3 : 0
+                                            color: Theme.withAlpha(Theme.primary, 0.1)
+                                            border.width: 3
                                             border.color: Theme.primary
                                             radius: parent.radius
                                             z: 2
-                                            Behavior on border.width { NumberAnimation { duration: 150 } }
+                                            opacity: delegateItem.isCurrent ? 1.0 : 0.0
+                                            Behavior on opacity { NumberAnimation { duration: 150 } }
                                         }
 
                                         DankIcon {
