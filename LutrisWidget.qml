@@ -439,6 +439,12 @@ PluginComponent {
                                     root.updateFilteredModel();
                                 }
                             }
+                            Keys.onDownPressed: {
+                                if (filteredGamesModel.count > 0) {
+                                    gamesGrid.currentIndex = 0;
+                                    gamesGrid.forceActiveFocus();
+                                }
+                            }
                             Keys.onTabPressed: {
                                 if (filteredGamesModel.count > 0) {
                                     gamesGrid.currentIndex = 0;
@@ -531,6 +537,14 @@ PluginComponent {
                                     currentIndex++;
                                 } else {
                                     currentIndex = 0;
+                                }
+                            }
+
+                            Keys.onUpPressed: {
+                                if (currentIndex < 4) {
+                                    searchField.forceActiveFocus();
+                                } else {
+                                    currentIndex -= 4;
                                 }
                             }
 
