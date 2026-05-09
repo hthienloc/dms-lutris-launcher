@@ -491,18 +491,6 @@ PluginComponent {
                                 backgroundColor: Theme.surfaceContainerHigh
                                 textColor: root.isLoading ? Theme.surfaceVariantText : Theme.surfaceText
                                 onClicked: root.fetchGames()
-                                
-                                RotationAnimator on rotation {
-                                    from: 0; to: 360; duration: 1000
-                                    loops: Animation.Infinite
-                                    running: root.isLoading
-                                }
-                                
-                                onRotationChanged: {
-                                    if (!root.isLoading && rotation !== 0) {
-                                        rotation = 0
-                                    }
-                                }
                             }
 
                             DankButton {
@@ -591,22 +579,9 @@ PluginComponent {
                                         radius: Theme.roundness === "ROUND_FULL" ? 12 : (Theme.roundness === "ROUND_TWELVE" ? 12 : (Theme.roundness === "ROUND_EIGHT" ? 8 : 4))
                                         clip: true
                                         opacity: (root.isLaunching && model.id !== root.launchingId) ? 0.5 : 1.0
-                                        scale: clickAnimation.running ? 0.95 : (delegateItem.isCurrent ? 1.05 : 1.0)
+                                        scale: delegateItem.isCurrent ? 1.05 : 1.0
                                         z: delegateItem.isCurrent ? 5 : 1
 
-                                        Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutQuad } }
-
-                                        Behavior on opacity {
-                                            NumberAnimation { duration: 300 }
-                                        }
-
-                                        SequentialAnimation {
-                                            id: clickAnimation
-                                            NumberAnimation { target: coverContainer; property: "scale"; to: 0.95; duration: 50 }
-                                            NumberAnimation { target: coverContainer; property: "scale"; to: 1.0; duration: 150 }
-                                        }
-
-                                        // Pulse animation when launching
                                         Rectangle {
                                             anchors.fill: parent
                                             color: "transparent"
@@ -614,12 +589,6 @@ PluginComponent {
                                             border.color: Theme.warning
                                             radius: parent.radius
                                             visible: model.id === root.launchingId
-                                            
-                                            SequentialAnimation on opacity {
-                                                loops: Animation.Infinite
-                                                NumberAnimation { from: 1.0; to: 0.4; duration: 800; easing.type: Easing.InOutQuad }
-                                                NumberAnimation { from: 0.4; to: 1.0; duration: 800; easing.type: Easing.InOutQuad }
-                                            }
                                         }
 
                                         Image {
@@ -793,21 +762,7 @@ PluginComponent {
                                     }
                                 }
 
-                                opacity: 0
-                                transform: Translate { y: 20 }
-                                
-                                Component.onCompleted: {
-                                    entryAnimation.start()
-                                }
-                                
-                                SequentialAnimation {
-                                    id: entryAnimation
-                                    PauseAnimation { duration: model.index * 50 }
-                                    ParallelAnimation {
-                                        NumberAnimation { target: delegateItem; property: "opacity"; to: 1.0; duration: 400; easing.type: Easing.OutCubic }
-                                        NumberAnimation { target: delegateItem.transform[0]; property: "y"; to: 0; duration: 400; easing.type: Easing.OutCubic }
-                                    }
-                                }
+                                opacity: 1.0
                             }
 
                             ScrollIndicator.vertical: ScrollIndicator { }
