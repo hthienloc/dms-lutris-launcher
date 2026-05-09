@@ -519,7 +519,6 @@ PluginComponent {
                             
                             highlightFollowsCurrentItem: true
                             highlightMoveDuration: 200
-                            highlightResizeDuration: 200
                             keyNavigationEnabled: true
                             
                             highlight: Item {
