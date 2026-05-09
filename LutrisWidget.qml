@@ -430,7 +430,7 @@ PluginComponent {
                             placeholderText: "Search your library..."
                             backgroundColor: Theme.surfaceContainerLow
                             normalBorderColor: "transparent"
-                            focusBorderColor: Theme.primary
+                            focusedBorderColor: Theme.primary
                             showClearButton: true
                             onTextEdited: root.onSearchTextChanged(text)
                             onTextChanged: {
