@@ -456,7 +456,6 @@ PluginComponent {
                                 backgroundColor: Theme.surfaceContainerHigh
                                 textColor: Theme.surfaceText
                                 onClicked: root.cycleSortMode()
-                                tooltip: "Sort: " + sortModes[sortMode].label
                             }
 
                             DankButton {
@@ -486,11 +485,17 @@ PluginComponent {
                                 backgroundColor: Theme.surfaceContainerHigh
                                 textColor: root.isLoading ? Theme.surfaceVariantText : Theme.surfaceText
                                 onClicked: root.fetchGames()
-                                rotation: root.isLoading ? 0 : 0
+                                
                                 RotationAnimator on rotation {
                                     from: 0; to: 360; duration: 1000
                                     loops: Animation.Infinite
                                     running: root.isLoading
+                                }
+                                
+                                onRotationChanged: {
+                                    if (!root.isLoading && rotation !== 0) {
+                                        rotation = 0
+                                    }
                                 }
                             }
 
