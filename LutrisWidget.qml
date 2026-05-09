@@ -555,8 +555,11 @@ PluginComponent {
                             }
 
                             delegate: Item {
+                                id: delegateItem
                                 width: gamesGrid.cellWidth
                                 height: gamesGrid.cellHeight
+                                
+                                readonly property bool isCurrent: GridView.isCurrentItem
 
                                 Column {
                                     anchors.centerIn: parent
@@ -571,10 +574,11 @@ PluginComponent {
                                         radius: Theme.roundness === "ROUND_FULL" ? 12 : (Theme.roundness === "ROUND_TWELVE" ? 12 : (Theme.roundness === "ROUND_EIGHT" ? 8 : 4))
                                         clip: true
                                         opacity: (root.isLaunching && model.id !== root.launchingId) ? 0.5 : 1.0
-                                        scale: clickAnimation.running ? 0.95 : (GridView.isCurrentItem && gamesGrid.activeFocus ? 1.02 : 1.0)
+                                        scale: clickAnimation.running ? 0.95 : (delegateItem.isCurrent ? 1.05 : 1.0)
                                         
-                                        border.width: (GridView.isCurrentItem && gamesGrid.activeFocus) ? 3 : 0
+                                        border.width: delegateItem.isCurrent ? 4 : 0
                                         border.color: Theme.primary
+                                        z: delegateItem.isCurrent ? 5 : 1
 
                                         Behavior on border.width { NumberAnimation { duration: 150 } }
                                         Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutQuad } }
