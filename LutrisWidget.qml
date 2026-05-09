@@ -508,16 +508,15 @@ PluginComponent {
                         }
                     }
 
-                    Rectangle {
+                    Item {
                         width: parent.width
-                        height: Math.min(500, gamesGrid.contentHeight)
-                        color: "transparent"
+                        height: root.isLoading ? 300 : (filteredGamesModel.count > 0 ? Math.min(500, gamesGrid.contentHeight) : 300)
                         clip: true
-                        visible: !root.isLoading && filteredGamesModel.count > 0
 
                         GridView {
                             id: gamesGrid
                             anchors.fill: parent
+                            visible: !root.isLoading && filteredGamesModel.count > 0
                             model: filteredGamesModel
                             cellWidth: parent.width / 4
                             cellHeight: 220
@@ -799,61 +798,61 @@ PluginComponent {
 
                             ScrollIndicator.vertical: ScrollIndicator { }
                         }
-                    }
 
-                    Column {
-                        anchors.centerIn: parent
-                        spacing: Theme.spacingM
-                        visible: root.isLoading
-                        
-                        DankIcon {
-                            name: "refresh"
-                            size: 48
-                            color: Theme.primary
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            RotationAnimator on rotation {
-                                from: 0; to: 360; duration: 1000; loops: Animation.Infinite; running: root.isLoading
+                        Column {
+                            anchors.centerIn: parent
+                            spacing: Theme.spacingM
+                            visible: root.isLoading
+                            
+                            DankIcon {
+                                name: "refresh"
+                                size: 48
+                                color: Theme.primary
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                RotationAnimator on rotation {
+                                    from: 0; to: 360; duration: 1000; loops: Animation.Infinite; running: root.isLoading
+                                }
+                            }
+                            
+                            StyledText {
+                                text: "Synchronizing with Lutris..."
+                                font.pixelSize: Theme.fontSizeMedium
+                                color: Theme.surfaceVariantText
+                                anchors.horizontalCenter: parent.horizontalCenter
                             }
                         }
-                        
-                        StyledText {
-                            text: "Synchronizing with Lutris..."
-                            font.pixelSize: Theme.fontSizeMedium
-                            color: Theme.surfaceVariantText
-                            anchors.horizontalCenter: parent.horizontalCenter
-                        }
-                    }
 
-                    Column {
-                        anchors.centerIn: parent
-                        width: parent.width - 64
-                        spacing: Theme.spacingM
-                        visible: !root.isLoading && filteredGamesModel.count === 0
-                        
-                        DankIcon {
-                            name: root.searchQuery !== "" ? "search_off" : "sports_esports"
-                            size: 48
-                            color: Theme.surfaceContainerHighest
-                            anchors.horizontalCenter: parent.horizontalCenter
-                        }
-                        
-                        StyledText {
-                            text: root.searchQuery !== "" ? "No matches for '" + root.searchQuery + "'" : "Your library is empty"
-                            font.pixelSize: Theme.fontSizeMedium
-                            color: Theme.surfaceVariantText
-                            horizontalAlignment: Text.AlignHCenter
-                            width: parent.width
-                        }
-                        
-                        DankButton {
-                            text: "Clear Filters"
-                            visible: root.searchQuery !== "" || root.favoriteOnly || root.blacklistOnly
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            onClicked: {
-                                root.searchQuery = ""
-                                root.favoriteOnly = false
-                                root.blacklistOnly = false
-                                root.updateFilteredModel()
+                        Column {
+                            anchors.centerIn: parent
+                            width: parent.width - 64
+                            spacing: Theme.spacingM
+                            visible: !root.isLoading && filteredGamesModel.count === 0
+                            
+                            DankIcon {
+                                name: root.searchQuery !== "" ? "search_off" : "sports_esports"
+                                size: 48
+                                color: Theme.surfaceContainerHighest
+                                anchors.horizontalCenter: parent.horizontalCenter
+                            }
+                            
+                            StyledText {
+                                text: root.searchQuery !== "" ? "No matches for '" + root.searchQuery + "'" : "Your library is empty"
+                                font.pixelSize: Theme.fontSizeMedium
+                                color: Theme.surfaceVariantText
+                                horizontalAlignment: Text.AlignHCenter
+                                width: parent.width
+                            }
+                            
+                            DankButton {
+                                text: "Clear Filters"
+                                visible: root.searchQuery !== "" || root.favoriteOnly || root.blacklistOnly
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                onClicked: {
+                                    root.searchQuery = ""
+                                    root.favoriteOnly = false
+                                    root.blacklistOnly = false
+                                    root.updateFilteredModel()
+                                }
                             }
                         }
                     }
