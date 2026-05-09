@@ -550,6 +550,7 @@ PluginComponent {
                             
                             Keys.onReturnPressed: launchCurrent()
                             Keys.onEnterPressed: launchCurrent()
+                            Keys.onSpacePressed: launchCurrent()
                             
                             function launchCurrent() {
                                 var item = model.get(currentIndex);
