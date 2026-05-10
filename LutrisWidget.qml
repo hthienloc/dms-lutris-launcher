@@ -16,6 +16,8 @@ PluginComponent {
 
     property int launchingId: -1
     readonly property bool isLaunching: launchingId !== -1
+    property string currentSlug: ""
+    property bool _internalUpdate: false
 
     Component.onCompleted: {
         console.log("Lutris Launcher: Plugin initialized")
@@ -70,8 +72,21 @@ PluginComponent {
 
     onPluginDataChanged: {
         if (pluginData.blacklist !== undefined) {
-            blacklist = pluginData.blacklist
-            updateFilteredModel()
+            var blacklistChanged = false;
+            if (!root.blacklist || root.blacklist.length !== pluginData.blacklist.length) {
+                blacklistChanged = true;
+            } else {
+                for (var i = 0; i < pluginData.blacklist.length; i++) {
+                    if (root.blacklist[i] !== pluginData.blacklist[i]) {
+                        blacklistChanged = true;
+                        break;
+                    }
+                }
+            }
+            if (blacklistChanged) {
+                blacklist = pluginData.blacklist
+                updateFilteredModel()
+            }
         }
         if (pluginData.dateFormat !== undefined) {
             dateFormat = pluginData.dateFormat
@@ -186,6 +201,9 @@ PluginComponent {
 
     function updateFilteredModel() {
         console.log("Lutris Launcher: Updating filtered model. Blacklist: " + JSON.stringify(root.blacklist))
+        
+        root._internalUpdate = true
+        var previousSlug = root.currentSlug
         filteredGamesModel.clear()
         var query = searchQuery.toLowerCase().trim()
         
@@ -194,6 +212,9 @@ PluginComponent {
         for (var b = 0; b < currentBlacklist.length; b++) {
             blackSet.add(currentBlacklist[b])
         }
+
+        var foundIndex = -1
+        var currentCount = 0
 
         for (var i = 0; i < gamesModel.count; i++) {
             var game = gamesModel.get(i)
@@ -208,6 +229,8 @@ PluginComponent {
             var matchesSearch = query === "" || (game.name && game.name.toLowerCase().includes(query))
             var matchesFavorite = !favoriteOnly || root.isFavorite(game.slug)
             if (matchesSearch && matchesFavorite) {
+                if (game.slug === previousSlug) foundIndex = currentCount
+
                 // Create a fresh object to avoid QML reference issues
                 filteredGamesModel.append({
                     "id": game.id,
@@ -217,11 +240,33 @@ PluginComponent {
                     "isVirtual": false,
                     "isBlacklisted": isBlacklisted
                 })
+                currentCount++
             }
         }
         
         console.log("Lutris Launcher: Filtered model updated. Count: " + filteredGamesModel.count)
         filteredStatus = query === "" ? "" : filteredGamesModel.count + " of " + gamesModel.count + " games"
+
+        // Restore highlight
+        if (foundIndex === -1 && filteredGamesModel.count > 0) {
+            foundIndex = 0
+        }
+
+        if (foundIndex !== -1) {
+            Qt.callLater(() => {
+                if (typeof gamesGrid !== "undefined" && gamesGrid) {
+                    gamesGrid.currentIndex = foundIndex
+                    // Explicitly update currentSlug to ensure it's in sync even if currentIndex didn't "change"
+                    if (gamesGrid.currentIndex >= 0 && gamesGrid.currentIndex < gamesGrid.model.count) {
+                        root.currentSlug = gamesGrid.model.get(gamesGrid.currentIndex).slug
+                    }
+                }
+                root._internalUpdate = false
+            })
+        } else {
+            root._internalUpdate = false
+            root.currentSlug = ""
+        }
     }
 
     function onSearchTextChanged(text) {
@@ -440,12 +485,14 @@ PluginComponent {
                                 }
                             }
                             Keys.onDownPressed: {
+                                if (root.isLaunching) return;
                                 if (filteredGamesModel.count > 0) {
                                     gamesGrid.currentIndex = 0;
                                     gamesGrid.forceActiveFocus();
                                 }
                             }
                             Keys.onTabPressed: {
+                                if (root.isLaunching) return;
                                 if (filteredGamesModel.count > 0) {
                                     gamesGrid.currentIndex = 0;
                                     gamesGrid.forceActiveFocus();
@@ -519,11 +566,18 @@ PluginComponent {
                             
                             highlightFollowsCurrentItem: true
                             highlightMoveDuration: 0
-                            keyNavigationEnabled: true
+                            keyNavigationEnabled: !root.isLaunching
+
+                            onCurrentIndexChanged: {
+                                if (!root._internalUpdate && currentIndex >= 0 && currentIndex < model.count) {
+                                    root.currentSlug = model.get(currentIndex).slug
+                                }
+                            }
                             
                             highlight: null
                             
                             Keys.onTabPressed: {
+                                if (root.isLaunching) return;
                                 if (currentIndex < count - 1) {
                                     currentIndex++;
                                 } else {
@@ -532,6 +586,7 @@ PluginComponent {
                             }
 
                             Keys.onUpPressed: {
+                                if (root.isLaunching) return;
                                 if (currentIndex < 4) {
                                     searchField.forceActiveFocus();
                                 } else {
@@ -540,6 +595,7 @@ PluginComponent {
                             }
 
                             Keys.onBacktabPressed: {
+                                if (root.isLaunching) return;
                                 if (currentIndex > 0) {
                                     currentIndex--;
                                 } else {
@@ -587,6 +643,12 @@ PluginComponent {
                                         
                                         Behavior on scale { NumberAnimation { duration: 150 } }
 
+                                        SequentialAnimation {
+                                            id: clickAnimation
+                                            NumberAnimation { target: coverContainer; property: "scale"; from: 1.03; to: 0.95; duration: 100; easing.type: Easing.OutQuad }
+                                            NumberAnimation { target: coverContainer; property: "scale"; from: 0.95; to: 1.03; duration: 150; easing.type: Easing.OutBack }
+                                        }
+
                                         Rectangle {
                                             anchors.fill: parent
                                             color: "transparent"
@@ -594,6 +656,26 @@ PluginComponent {
                                             border.color: Theme.warning
                                             radius: parent.radius
                                             visible: model.id === root.launchingId
+
+                                            DankIcon {
+                                                anchors.centerIn: parent
+                                                name: "sync"
+                                                size: 48
+                                                color: Theme.warning
+                                                
+                                                RotationAnimator on rotation {
+                                                    from: 0; to: 360; duration: 1000
+                                                    loops: Animation.Infinite
+                                                    running: model.id === root.launchingId
+                                                }
+                                            }
+                                            
+                                            SequentialAnimation on opacity {
+                                                loops: Animation.Infinite
+                                                running: model.id === root.launchingId
+                                                NumberAnimation { from: 1.0; to: 0.6; duration: 800; easing.type: Easing.InOutQuad }
+                                                NumberAnimation { from: 0.6; to: 1.0; duration: 800; easing.type: Easing.InOutQuad }
+                                            }
                                         }
 
                                         Image {
@@ -633,6 +715,8 @@ PluginComponent {
 
                                             onClicked: (mouse) => {
                                                 if (root.isLaunching) return;
+                                                
+                                                gamesGrid.currentIndex = index
                                                 
                                                 if (model.isVirtual) {
                                                     if (mouse.button === Qt.LeftButton) {
