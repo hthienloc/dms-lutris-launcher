@@ -6,7 +6,9 @@ Browse and launch your Lutris games from the bar.
 
 ## Install
 
-[Install Now](dms://plugin/install/lutris-launcher)
+```
+dms://plugin/install/lutris-launcher
+```
 
 Or manually:
 ```bash
