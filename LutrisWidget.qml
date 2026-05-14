@@ -200,8 +200,6 @@ PluginComponent {
     }
 
     function updateFilteredModel() {
-        console.log("Lutris Launcher: Updating filtered model. Blacklist: " + JSON.stringify(root.blacklist))
-        
         root._internalUpdate = true
         var previousSlug = root.currentSlug
         filteredGamesModel.clear()
@@ -231,7 +229,6 @@ PluginComponent {
             if (matchesSearch && matchesFavorite) {
                 if (game.slug === previousSlug) foundIndex = currentCount
 
-                // Create a fresh object to avoid QML reference issues
                 filteredGamesModel.append({
                     "id": game.id,
                     "name": game.name,
@@ -270,11 +267,6 @@ PluginComponent {
     }
 
     function onSearchTextChanged(text) {
-        searchQuery = text
-        updateFilteredModel()
-    }
-
-    function saveStats() {
         try {
             pluginService?.savePluginData(pluginId, "favorites", favorites)
             pluginService?.savePluginData(pluginId, "playCounts", playCounts)
