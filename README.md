@@ -7,7 +7,7 @@ Browse and launch your Lutris games from the bar.
 ## Install
 
 ```
-dms://plugin/install/lutris-launcher
+dms://plugin/install/lutrisLauncher
 ```
 
 Or manually:
