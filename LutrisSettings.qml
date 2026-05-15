@@ -48,6 +48,13 @@ PluginSettings {
                 ]
                 defaultValue: "YYYY - MM - DD"
             }
+
+            ToggleSetting {
+                settingKey: "showHints"
+                label: "Show Hints"
+                description: "Display helpful usage tips in the plugin popout."
+                defaultValue: true
+            }
         }
     }
 

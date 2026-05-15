@@ -6,6 +6,7 @@ import qs.Common
 import qs.Services
 import qs.Widgets
 import qs.Modules.Plugins
+import "./components"
 
 PluginComponent {
     id: root
@@ -42,6 +43,7 @@ PluginComponent {
     property var playCounts: pluginData.playCounts ?? {}
     property var blacklist: pluginData.blacklist ?? []
     property string dateFormat: pluginData.dateFormat ?? "YYYY - MM - DD"
+    readonly property bool showHints: pluginData.showHints ?? true
 
     function getFormattedDate(timestamp) {
         if (!timestamp) return "Never played"
@@ -905,6 +907,24 @@ PluginComponent {
                                     root.updateFilteredModel()
                                 }
                             }
+                        }
+                    }
+
+                    HintSection {
+                        showHints: root.showHints
+                        width: parent.width
+
+                        HintItem {
+                            icon: "mouse"
+                            text: "Left Click to launch a game, Right Click for more options"
+                        }
+                        HintItem {
+                            icon: "star"
+                            text: "Use the star icon to favorite games for quick access"
+                        }
+                        HintItem {
+                            icon: "visibility_off"
+                            text: "Hide games you don't play often to keep your list clean"
                         }
                     }
                 }
