@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Controls
 import qs.Common
-import qs.Services
 import qs.Widgets
 import qs.Modules.Plugins
 import "../dms-common"
@@ -39,10 +38,13 @@ PluginSettings {
     }
 
     SettingsCard {
-        SectionTitle { text: "Quick Guide" }
-        
-        InfoText {
-            text: "• Left Click: Launch game\n• Right Click: Show stats & hide option\n• Blacklist Toggle: View and manage hidden games directly in the main widget."
+        SectionTitle { text: "Usage Guide" }
+        UsageGuide {
+            items: [
+                "Left Click: Launch the selected game instantly.",
+                "Right Click: Show detailed stats and hide/blacklist options.",
+                "Blacklist Toggle: Manage your hidden games library directly from the widget."
+            ]
         }
     }
 }
