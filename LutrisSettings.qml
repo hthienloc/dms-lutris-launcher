@@ -4,99 +4,45 @@ import qs.Common
 import qs.Services
 import qs.Widgets
 import qs.Modules.Plugins
+import "./components"
 
 PluginSettings {
     id: root
     pluginId: "lutrisLauncher"
 
-    StyledText {
-        width: parent.width
-        text: "Lutris Launcher Settings"
-        font.pixelSize: Theme.fontSizeLarge
-        font.weight: Font.Bold
-        color: Theme.surfaceText
+    PluginHeader {
+        title: "Lutris Launcher Settings"
     }
 
-    StyledRect {
-        width: parent.width
-        height: settingsColumn.implicitHeight + Theme.spacingL * 2
-        radius: Theme.cornerRadius
-        color: Theme.surfaceContainerHigh
+    SettingsCard {
+        SectionTitle { text: "Display Options" }
 
-        Column {
-            id: settingsColumn
-            anchors.fill: parent
-            anchors.margins: Theme.spacingL
-            spacing: Theme.spacingM
+        SelectionSetting {
+            settingKey: "dateFormat"
+            label: "Last Played Format"
+            description: "Choose how the last played date is displayed"
+            options: [
+                { label: "YYYY - MM - DD", value: "YYYY - MM - DD" },
+                { label: "DD / MM / YYYY", value: "DD / MM / YYYY" },
+                { label: "MM / DD / YYYY", value: "MM / DD / YYYY" },
+                { label: "Relative time", value: "relative" }
+            ]
+            defaultValue: "YYYY - MM - DD"
+        }
 
-            StyledText {
-                text: "Display Options"
-                font.pixelSize: Theme.fontSizeMedium
-                font.weight: Font.Medium
-                color: Theme.surfaceText
-            }
-
-            SelectionSetting {
-                settingKey: "dateFormat"
-                label: "Last Played Format"
-                description: "Choose how the last played date is displayed"
-                options: [
-                    { label: "YYYY - MM - DD", value: "YYYY - MM - DD" },
-                    { label: "DD / MM / YYYY", value: "DD / MM / YYYY" },
-                    { label: "MM / DD / YYYY", value: "MM / DD / YYYY" },
-                    { label: "Relative time", value: "relative" }
-                ]
-                defaultValue: "YYYY - MM - DD"
-            }
-
-            ToggleSetting {
-                settingKey: "showHints"
-                label: "Show Hints"
-                description: "Display helpful usage tips in the plugin popout."
-                defaultValue: true
-            }
+        ToggleSetting {
+            settingKey: "showHints"
+            label: "Show Hints"
+            description: "Display helpful usage tips and shortcuts at the bottom of the popout."
+            defaultValue: true
         }
     }
 
-    StyledRect {
-        width: parent.width
-        height: infoColumn.implicitHeight + Theme.spacingL * 2
-        radius: Theme.cornerRadius
-        color: Theme.surface
-
-        Column {
-            id: infoColumn
-            anchors.fill: parent
-            anchors.margins: Theme.spacingL
-            spacing: Theme.spacingM
-
-            Row {
-                spacing: Theme.spacingM
-
-                DankIcon {
-                    name: "info"
-                    size: Theme.iconSize
-                    color: Theme.primary
-                    anchors.verticalCenter: parent.verticalCenter
-                }
-
-                StyledText {
-                    text: "Quick Guide"
-                    font.pixelSize: Theme.fontSizeMedium
-                    font.weight: Font.Medium
-                    color: Theme.surfaceText
-                    anchors.verticalCenter: parent.verticalCenter
-                }
-            }
-
-            StyledText {
-                text: "• Left Click: Launch game\n• Right Click: Show stats & hide option\n• Blacklist Toggle: View and manage hidden games directly in the main widget."
-                font.pixelSize: Theme.fontSizeSmall
-                color: Theme.surfaceVariantText
-                wrapMode: Text.WordWrap
-                width: parent.width
-                lineHeight: 1.4
-            }
+    SettingsCard {
+        SectionTitle { text: "Quick Guide" }
+        
+        InfoText {
+            text: "• Left Click: Launch game\n• Right Click: Show stats & hide option\n• Blacklist Toggle: View and manage hidden games directly in the main widget."
         }
     }
 }
