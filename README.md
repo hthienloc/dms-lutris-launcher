@@ -6,7 +6,14 @@ Browse and launch your Lutris games from the bar.
 
 ## Install
 
-```
+
+**Required:** This plugin requires [dms-common](https://github.com/hthienloc/dms-common) to be installed.
+
+```bash
+# 1. Install shared components
+git clone https://github.com/hthienloc/dms-common ~/.config/DankMaterialShell/plugins/dms-common
+
+# 2. Install this plugin
 dms://plugin/install/lutrisLauncher
 ```
 
@@ -35,6 +42,4 @@ git clone https://github.com/hthienloc/dms-lutris-launcher ~/.config/DankMateria
 
 ## License
 
-GPL-3.0
-## Dependencies
-- Requires [dms-common](https://github.com/hthienloc/dms-common) to be installed in the plugins directory.
+GPL-3.0(https://github.com/hthienloc/dms-common) to be installed in the plugins directory.
