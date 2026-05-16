@@ -14,7 +14,7 @@ Browse and launch your Lutris games from the bar.
 git clone https://github.com/hthienloc/dms-common ~/.config/DankMaterialShell/plugins/dms-common
 
 # 2. Install this plugin
-dms://plugin/install/lutrisLauncher
+dms plugins install lutrisLauncher
 ```
 
 Or manually:
