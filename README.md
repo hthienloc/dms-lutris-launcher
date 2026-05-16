@@ -43,3 +43,11 @@ git clone https://github.com/hthienloc/dms-lutris-launcher ~/.config/DankMateria
 ## License
 
 GPL-3.0
+
+## Roadmap / TODO
+
+- [ ] **Runner Badges**: Display small icons on game covers to identify the runner (Wine, Steam, RetroArch, etc.).
+- [ ] **SteamGridDB Integration**: Automatically fetch high-quality cover art from SteamGridDB for games missing local assets.
+- [ ] **Active Game Tracking**: Show a special "Now Playing" state on the bar when a game is running, including time elapsed.
+- [ ] **Process Management**: Add a "Force Quit" option to the right-click menu for active games.
+- [ ] **Custom Grid Sizes**: Allow users to adjust the size and spacing of the game grid in the popout.
