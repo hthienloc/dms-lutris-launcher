@@ -46,8 +46,8 @@ GPL-3.0
 
 ## Roadmap / TODO
 
-- [ ] **Runner Badges**: Display small icons on game covers to identify the runner (Wine, Steam, RetroArch, etc.).
-- [ ] **SteamGridDB Integration**: Automatically fetch high-quality cover art from SteamGridDB for games missing local assets.
-- [ ] **Active Game Tracking**: Show a special "Now Playing" state on the bar when a game is running, including time elapsed.
-- [ ] **Process Management**: Add a "Force Quit" option to the right-click menu for active games.
-- [ ] **Custom Grid Sizes**: Allow users to adjust the size and spacing of the game grid in the popout.
+- [ ] **Runner Identification**: Display platform badges (e.g., Wine, Steam, Epic, GOG) on game cards to quickly identify the runner.
+- [ ] **SteamGridDB Sync**: Integrate with the SteamGridDB API to automatically fetch missing or high-resolution cover art for your library.
+- [ ] **Real-time Status Tracking**: Monitor and display "Now Playing" status on the bar widget when a game process is active.
+- [ ] **Quick Process Actions**: Add "Kill Process" and "Open Game Folder" options to the game management menu.
+- [ ] **Categorization**: Support user-defined categories/tags to further organize large game libraries beyond simple favorites.
