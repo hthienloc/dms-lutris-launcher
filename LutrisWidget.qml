@@ -112,54 +112,38 @@ PluginComponent {
     ]
 
     function fetchGames() {
-        console.log("Lutris Launcher: Fetching games...")
+        console.log("Lutris Launcher: Fetching games from SQLite DB...")
         isLoading = true
         statusMessage = "Loading games..."
         
+        const pyScript =
+            "import sqlite3,json,os;" +
+            "db=os.path.expanduser('~/.local/share/lutris/pga.db');" +
+            "conn=sqlite3.connect('file:'+db+'?mode=ro',uri=True);" +
+            "conn.row_factory=sqlite3.Row;" +
+            "rows=conn.execute('SELECT id,name,slug,runner,platform,lastplayed,playtime FROM games WHERE installed=1 ORDER BY name COLLATE NOCASE').fetchall();" +
+            "cover=os.path.expanduser('~/.local/share/lutris/coverart/');" +
+            "out=[{" +
+              "'id':r['id'],'name':r['name'],'slug':r['slug'],'runner':r['runner'],'platform':r['platform']," +
+              "'lastplayed':r['lastplayed'] or 0,'playtimeSeconds':float(r['playtime'] or 0)," +
+              "'coverPath':cover+r['slug']+'.jpg' if os.path.exists(cover+r['slug']+'.jpg') else ''" +
+            "} for r in rows];" +
+            "print(json.dumps(out))"
+
         Proc.runCommand(
             "lutris-launcher-fetch",
-            ["/usr/bin/lutris", "-l", "-o", "-j"],
+            ["python3", "-c", pyScript],
             function(output, exitCode) {
-                console.log("Lutris Launcher: Fetch finished with exit code: " + exitCode)
                 isLoading = false
-                if (exitCode !== 0 && exitCode !== 124) { // 124 is timeout but might have data
-                    statusMessage = "Error fetching games"
-                    return
-                }
-                if (!output || output.trim() === "") {
-                    console.log("Lutris Launcher: No output from Lutris")
-                    gamesModel.clear()
-                    statusMessage = "No installed games found"
+                if (exitCode !== 0 || !output || output.trim() === "") {
+                    statusMessage = "Error reading Lutris database"
+                    console.warn("Lutris Launcher: DB query failed:", output)
                     return
                 }
                 try {
-                    // Clean output: remove lines starting with date, WARNING, or ERROR
-                    var lines = output.split("\n")
-                    var cleanLines = lines.filter(function(line) {
-                        var trimmed = line.trim()
-                        if (trimmed.length === 0) return false
-                        // Matches "2024-05-08 18:34:44,385: ..."
-                        if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) return false
-                        if (/^WARNING:/.test(trimmed)) return false
-                        if (/^ERROR:/.test(trimmed)) return false
-                        if (/^INFO/.test(trimmed)) return false
-                        return true
-                    })
-                    
-                    var cleanJson = cleanLines.join("\n")
-                    // Still try to find the array if there's garbage at start/end
-                    var start = cleanJson.indexOf("[")
-                    var end = cleanJson.lastIndexOf("]")
-                    if (start === -1 || end === -1) {
-                        console.error("Lutris Launcher: No JSON array found after cleaning")
-                        statusMessage = "Data format error"
-                        return
-                    }
-                    cleanJson = cleanJson.substring(start, end + 1)
-                    
-                    var parsedGames = JSON.parse(cleanJson)
-                    console.log("Lutris Launcher: Parsed " + parsedGames.length + " games")
-                    
+                    var parsedGames = JSON.parse(output.trim())
+                    console.log("Lutris Launcher: Loaded " + parsedGames.length + " games from DB")
+
                     sortGames(parsedGames)
 
                     gamesModel.clear()
@@ -171,15 +155,13 @@ PluginComponent {
                             "slug": parsedGames[i].slug
                         })
                     }
-                    // Cache full game list for instant load next time
                     pluginService?.savePluginData(pluginId, "cachedGames", parsedGames)
-                    // Save full list for Settings UI
                     pluginService?.savePluginData(pluginId, "allGames", gamesListForSettings)
-                    
+
                     updateFilteredModel()
                     statusMessage = parsedGames.length + " games found"
                 } catch(e) {
-                    console.error("Lutris Launcher: Error parsing JSON: " + e)
+                    console.error("Lutris Launcher: Error parsing DB output:", e)
                     statusMessage = "Error parsing game list"
                 }
             },
