@@ -22,6 +22,16 @@ PluginComponent {
 
     Component.onCompleted: {
         console.log("Lutris Launcher: Plugin initialized")
+        // Load cached list instantly, then fetch update in background
+        const cached = pluginData.cachedGames
+        if (cached && cached.length > 0) {
+            gamesModel.clear()
+            for (var i = 0; i < cached.length; i++) {
+                gamesModel.append(cached[i])
+            }
+            updateFilteredModel()
+            statusMessage = cached.length + " games (cached)"
+        }
         fetchGames()
     }
 
@@ -161,6 +171,8 @@ PluginComponent {
                             "slug": parsedGames[i].slug
                         })
                     }
+                    // Cache full game list for instant load next time
+                    pluginService?.savePluginData(pluginId, "cachedGames", parsedGames)
                     // Save full list for Settings UI
                     pluginService?.savePluginData(pluginId, "allGames", gamesListForSettings)
                     
@@ -171,7 +183,7 @@ PluginComponent {
                     statusMessage = "Error parsing game list"
                 }
             },
-            20000
+            0
         )
     }
 
