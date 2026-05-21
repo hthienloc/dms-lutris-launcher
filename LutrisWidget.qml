@@ -188,17 +188,17 @@ PluginComponent {
         playCounts = newCounts
         saveStats()
 
-        Proc.runCommand(
-            "lutris-launcher-launch",
-            ["sh", "-c", "/usr/bin/lutris lutris:rungame/" + slug + " &"],
-            function(output, exitCode) {
-                Qt.callLater(() => {
-                    var timer = Qt.createQmlObject('import QtQuick; Timer { interval: 20000; repeat: false; onTriggered: { parent.launchingId = -1; destroy(); } }', root);
-                    timer.start();
-                });
-            },
-            0
-        )
+        Quickshell.execDetached(["lutris", "lutris:rungameid/" + gameId])
+
+        // Reset launching state after a delay
+        launchResetTimer.restart()
+    }
+
+    Timer {
+        id: launchResetTimer
+        interval: 5000
+        repeat: false
+        onTriggered: root.launchingId = -1
     }
 
     function updateFilteredModel() {
