@@ -182,7 +182,7 @@ PluginComponent {
         playCounts = newCounts
         saveStats()
 
-        Quickshell.execDetached(["lutris", "lutris:rungameid/" + gameId])
+        Quickshell.execDetached(["xdg-open", "lutris:rungameid/" + gameId])
 
         // Reset launching state after a delay
         launchResetTimer.restart()
@@ -190,7 +190,7 @@ PluginComponent {
 
     Timer {
         id: launchResetTimer
-        interval: 5000
+        interval: 20000
         repeat: false
         onTriggered: root.launchingId = -1
     }
@@ -263,6 +263,11 @@ PluginComponent {
     }
 
     function onSearchTextChanged(text) {
+        root.searchQuery = text
+        updateFilteredModel()
+    }
+
+    function saveStats() {
         try {
             pluginService?.savePluginData(pluginId, "favorites", favorites)
             pluginService?.savePluginData(pluginId, "playCounts", playCounts)
