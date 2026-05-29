@@ -6,7 +6,7 @@ import qs.Common
 import qs.Services
 import qs.Widgets
 import qs.Modules.Plugins
-import "../dms-common"
+import "./dms-common"
 
 PluginComponent {
     id: root
@@ -770,7 +770,7 @@ PluginComponent {
 
                                                 StyledText {
                                                     width: parent.width
-                                                    text: "Plays: " + (root.playCounts[model.slug]?.count || 0)
+                                                    text: I18n.tr("Plays: ") + (root.playCounts[model.slug]?.count || 0)
                                                     font.pixelSize: 10
                                                     horizontalAlignment: Text.AlignHCenter
                                                 }
@@ -779,7 +779,7 @@ PluginComponent {
                                                     width: parent.width - Theme.spacingS
                                                     height: 32
                                                     anchors.horizontalCenter: parent.horizontalCenter
-                                                    text: model.isBlacklisted ? "Unhide" : "Hide"
+                                                    text: model.isBlacklisted ? I18n.tr("Unhide") : I18n.tr("Hide")
                                                     iconName: model.isBlacklisted ? "visibility" : "block"
                                                     backgroundColor: Theme.surfaceContainerHigh
                                                     textColor: model.isBlacklisted ? Theme.primary : Theme.error
@@ -797,7 +797,7 @@ PluginComponent {
                                                 
                                                 StyledText {
                                                     visible: !model.isBlacklisted && root.isFavorite(model.slug)
-                                                    text: "Can't hide favorites"
+                                                    text: I18n.tr("Can't hide favorites")
                                                     font.pixelSize: 9
                                                     color: Theme.error
                                                     horizontalAlignment: Text.AlignHCenter
@@ -808,7 +808,7 @@ PluginComponent {
                                                     width: 40
                                                     height: 24
                                                     anchors.horizontalCenter: parent.horizontalCenter
-                                                    text: "Close"
+                                                    text: I18n.tr("Close")
                                                     backgroundColor: "transparent"
                                                     textColor: Theme.surfaceVariantText
                                                     onClicked: infoPanel.visible = false
@@ -867,7 +867,7 @@ PluginComponent {
                             }
                             
                             StyledText {
-                                text: "Synchronizing with Lutris..."
+                                text: I18n.tr("Synchronizing with Lutris...")
                                 font.pixelSize: Theme.fontSizeMedium
                                 color: Theme.surfaceVariantText
                                 anchors.horizontalCenter: parent.horizontalCenter
@@ -888,7 +888,7 @@ PluginComponent {
                             }
                             
                             StyledText {
-                                text: root.searchQuery !== "" ? "No matches for '" + root.searchQuery + "'" : "Your library is empty"
+                                text: root.searchQuery !== "" ? I18n.tr("No matches for '") + root.searchQuery + "'" : I18n.tr("Your library is empty")
                                 font.pixelSize: Theme.fontSizeMedium
                                 color: Theme.surfaceVariantText
                                 horizontalAlignment: Text.AlignHCenter
@@ -896,7 +896,7 @@ PluginComponent {
                             }
                             
                             DankButton {
-                                text: "Clear Filters"
+                                text: I18n.tr("Clear Filters")
                                 visible: root.searchQuery !== "" || root.favoriteOnly || root.blacklistOnly
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 onClicked: {
@@ -915,15 +915,15 @@ PluginComponent {
 
                         HintItem {
                             icon: "mouse"
-                            text: "Left Click to launch a game, Right Click for more options"
+                            text: I18n.tr("Left Click to launch a game, Right Click for more options")
                         }
                         HintItem {
                             icon: "star"
-                            text: "Use the star icon to favorite games for quick access"
+                            text: I18n.tr("Use the star icon to favorite games for quick access")
                         }
                         HintItem {
                             icon: "visibility_off"
-                            text: "Hide games you don't play often to keep your list clean"
+                            text: I18n.tr("Hide games you don't play often to keep your list clean")
                         }
                     }
                 }
