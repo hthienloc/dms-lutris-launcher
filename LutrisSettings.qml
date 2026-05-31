@@ -10,23 +10,20 @@ PluginSettings {
     pluginId: "lutrisLauncher"
 
     SettingsCard {
-        SectionTitle { text: I18n.tr("Usage Guide"); icon: "help" }
-        UsageGuide {
-            items: [
-                I18n.tr("Left Click: Launch the selected game instantly."),
-                I18n.tr("Right Click: Show detailed stats and hide/blacklist options."),
-                I18n.tr("Blacklist Toggle: Manage your hidden games library directly from the widget.")
-            ]
+        id: displaySection
+        SectionTitle { 
+            text: I18n.tr("Display Options")
+            icon: "visibility" 
+            showReset: dateFormat.isDirty
+            onResetClicked: {
+                dateFormat.resetToDefault();
+            }
         }
-    }
 
-    SettingsCard {
-        SectionTitle { text: I18n.tr("Display Options"); icon: "visibility" }
-
-        SelectionSetting {
+        SelectionSettingPlus {
+            id: dateFormat
             settingKey: "dateFormat"
             label: I18n.tr("Last Played Format")
-            description: I18n.tr("Choose how the last played date is displayed")
             options: [
                 { label: I18n.tr("YYYY - MM - DD"), value: "YYYY - MM - DD" },
                 { label: I18n.tr("DD / MM / YYYY"), value: "DD / MM / YYYY" },
@@ -35,12 +32,43 @@ PluginSettings {
             ]
             defaultValue: "YYYY - MM - DD"
         }
+    }
 
-        ToggleSetting {
+    SettingsCard {
+        id: behaviorSection
+        SectionTitle { 
+            text: I18n.tr("Behavior")
+            icon: "settings" 
+            showReset: showHints.isDirty
+            onResetClicked: {
+                showHints.resetToDefault();
+            }
+        }
+
+        ToggleSettingPlus {
+            id: showHints
             settingKey: "showHints"
             label: I18n.tr("Show Hints")
-            description: I18n.tr("Display helpful usage tips and shortcuts at the bottom of the popout.")
             defaultValue: true
+        }
+    }
+
+    SettingsCard {
+        SectionTitle { 
+            id: usageTitle
+            text: I18n.tr("Usage Guide")
+            icon: "menu_book" 
+            collapsible: true
+            settingKey: "usageGuideExpanded"
+        }
+
+        UsageGuide {
+            expanded: usageTitle.isExpanded
+            items: [
+                I18n.tr("<b>Left-click</b> a game tile to launch it instantly."),
+                I18n.tr("<b>Right-click</b> a tile to view stats and manage visibility."),
+                I18n.tr("Toggle <b>Blacklist</b> mode in the popout to manage hidden games.")
+            ]
         }
     }
 
